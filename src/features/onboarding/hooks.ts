@@ -19,3 +19,21 @@ export function useLoadSampleData() {
     onSuccess: () => void queryClient.invalidateQueries(),
   });
 }
+
+/** Removes every sample lead (tagged "sample"); the company's own leads aren't touched. */
+export function useDeleteSampleData() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiClient.delete<{ deleted: number }>("/onboarding/sample-data"),
+    onSuccess: () => void queryClient.invalidateQueries(),
+  });
+}
+
+/** Owner: marks the setup wizard finished (the dashboard stops asking). */
+export function useCompleteSetup() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiClient.post<unknown>("/onboarding/complete"),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["auth", "me"] }),
+  });
+}

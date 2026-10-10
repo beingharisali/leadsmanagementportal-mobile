@@ -6,6 +6,7 @@ import { StyleSheet, View } from "react-native";
 import { AppText } from "@/components/ui/app-text";
 import { HeaderButton } from "@/components/ui/header-button";
 import { Screen } from "@/components/ui/screen";
+import { AnnouncementBanners, SampleDataBanner, VerifyEmailBanner } from "@/features/account/notices";
 import { useCurrentUser } from "@/features/auth/auth-provider";
 import { GettingStartedCard, SetupBanner, StaleLeadsBanner } from "@/features/dashboard/components/dashboard-banners";
 import { LeaderboardCard } from "@/features/dashboard/components/leaderboard-card";
@@ -57,6 +58,9 @@ export default function HomeScreen() {
       </View>
 
       <WorkspaceBanners user={user} />
+      <AnnouncementBanners />
+      <VerifyEmailBanner />
+      <SampleDataBanner />
       <SetupBanner />
       {manager && stats.data?.total === 0 && <GettingStartedCard />}
       <StaleLeadsBanner manager={manager} />

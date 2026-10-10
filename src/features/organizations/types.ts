@@ -1,6 +1,9 @@
 import type { PlanFeature, PlanKey, PlanLimits } from "@/features/plans/types";
 
 /** Mirrors the API (server/src/modules/organizations). */
+export const TEAM_SIZES = ["1-5", "6-20", "21-50", "51-200", "200+"] as const;
+export type TeamSize = (typeof TEAM_SIZES)[number];
+
 export type OrganizationStatus = "active" | "suspended";
 export type BillingStatus = "trial" | "paid";
 
@@ -23,6 +26,7 @@ export interface OrganizationSummary {
   /** Present when a logo is uploaded; `updatedAt` versions the image URL */
   logo: { updatedAt: string } | null;
   industry?: string;
+  teamSize?: TeamSize;
   phone?: string;
   city?: string;
   /** The owner hasn't finished the setup wizard yet (new companies) */

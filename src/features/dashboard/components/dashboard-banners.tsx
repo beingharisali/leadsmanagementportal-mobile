@@ -16,7 +16,7 @@ import { getErrorMessage } from "@/lib/api-client";
 import { linkParams } from "@/lib/link-params";
 import { spacing } from "@/theme/colors";
 
-/** Owners, until they finish the setup wizard (on the website for now). */
+/** Owners, until they finish or skip the setup wizard. */
 export function SetupBanner() {
   const user = useCurrentUser();
   if (user.role !== "owner" || !user.organization?.setupPending) return null;
@@ -24,8 +24,10 @@ export function SetupBanner() {
     <Banner
       tone="info"
       title={`Finish setting up ${user.organization.name}`}
-      message="A few quick steps: company details, your pipeline, inviting agents and adding your first leads. Open GetCloseWise on the website to continue."
-    />
+      message="A few quick steps: company details, your pipeline, inviting agents and adding your first leads."
+    >
+      <Button title="Continue setup" variant="ghost" icon="arrow-forward" onPress={() => router.push("/setup")} style={styles.bannerButton} />
+    </Banner>
   );
 }
 

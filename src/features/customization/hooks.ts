@@ -1,9 +1,20 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 
 import { apiClient } from "@/lib/api-client";
 
-import { DEFAULT_SETTINGS, type CustomFieldValue, type CustomFieldDefinition, type WorkspaceSettings } from "./types";
+import {
+  DEFAULT_SETTINGS,
+  type ColorName,
+  type CustomFieldDefinition,
+  type CustomFieldType,
+  type CustomFieldValue,
+  type SettingsUsage,
+  type TagOption,
+  type TeamSettings,
+  type TrackingSettings,
+  type WorkspaceSettings,
+} from "./types";
 
 export const settingsKeys = {
   all: ["settings"] as const,
@@ -80,3 +91,59 @@ export function formatCustomFieldValue(field: CustomFieldDefinition, value: Cust
       return String(value);
   }
 }
+
+// ---- Editing the workspace (owners and admins) ----
+
+export function useSettingsUsage() {
+  return useQuery({ queryKey: [...settingsKeys.all, "usage"], queryFn: () => apiClient.get<SettingsUsage>("/settings/usage") });
+}
+
+/** Saving settings returns the whole new settings; leads may have moved, so they refresh too. */
+function useSaveSettings<P>(request: (payload: P) => Promise<WorkspaceSettings>) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: request,
+    onSuccess: (settings) => {
+      queryClient.setQueryData(settingsKeys.all, settings);
+      void queryClient.invalidateQueries({ queryKey: [...settingsKeys.all, "usage"] });
+      void queryClient.invalidateQueries({ queryKey: ["leads"] });
+    },
+  });
+}
+
+/** `moveLeads`: leads of removed stages / sources go to another, `{ removedKey: targetKey }`. */
+type MoveLeads = Record<string, string>;
+
+export const useUpdatePipeline = () =>
+  useSaveSettings((payload: { stages: { key?: string; label: string; color: ColorName }[]; moveLeads?: MoveLeads }) =>
+    apiClient.put<WorkspaceSettings>("/settings/pipeline", payload),
+  );
+
+export const useUpdateSources = () =>
+  useSaveSettings((payload: { sources: { key?: string; label: string }[]; moveLeads?: MoveLeads }) =>
+    apiClient.put<WorkspaceSettings>("/settings/sources", payload),
+  );
+
+export const useUpdateLostReasons = () =>
+  useSaveSettings((lostReasons: string[]) => apiClient.put<WorkspaceSettings>("/settings/lost-reasons", { lostReasons }));
+
+export const useUpdateTags = () =>
+  useSaveSettings((tags: TagOption[]) => apiClient.put<WorkspaceSettings>("/settings/tags", { tags }));
+
+export const useRenameTag = () =>
+  useSaveSettings((payload: { from: string; to: string }) => apiClient.post<WorkspaceSettings>("/settings/tags/rename", payload));
+
+export const useDeleteTag = () =>
+  useSaveSettings((name: string) => apiClient.delete<WorkspaceSettings>(`/settings/tags/${encodeURIComponent(name)}`));
+
+export const useUpdateCustomFields = () =>
+  useSaveSettings(
+    (fields: { key?: string; label: string; type: CustomFieldType; options: string[]; required: boolean }[]) =>
+      apiClient.put<WorkspaceSettings>("/settings/custom-fields", { fields }),
+  );
+
+export const useUpdateTracking = () =>
+  useSaveSettings((tracking: TrackingSettings) => apiClient.put<WorkspaceSettings>("/settings/tracking", tracking));
+
+export const useUpdateTeamSettings = () =>
+  useSaveSettings((team: TeamSettings) => apiClient.put<WorkspaceSettings>("/settings/team", team));

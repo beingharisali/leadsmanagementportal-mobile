@@ -42,6 +42,26 @@ export interface TagOption {
 export const CUSTOM_FIELD_TYPES = ["text", "textarea", "number", "date", "select", "checkbox"] as const;
 export type CustomFieldType = (typeof CUSTOM_FIELD_TYPES)[number];
 
+export const customFieldTypeLabels: Record<CustomFieldType, string> = {
+  text: "Short text",
+  textarea: "Long text",
+  number: "Number",
+  date: "Date",
+  select: "Dropdown",
+  checkbox: "Yes / No",
+};
+
+/** How many leads use each stage, source, tag and custom field (owners and admins). */
+export interface SettingsUsage {
+  stages: Record<string, number>;
+  sources: Record<string, number>;
+  tags: { name: string; count: number }[];
+  customFields: Record<string, number>;
+}
+
+/** Same limits as the API (server/src/modules/customization/customization.constants.ts). */
+export const SETTINGS_LIMITS = { stages: 30, sources: 50, lostReasons: 30, tags: 100, customFields: 30, selectOptions: 50 };
+
 export interface CustomFieldDefinition {
   key: string;
   label: string;
@@ -77,8 +97,21 @@ export const targetMetricLabels: Record<TargetMetric, string> = {
   wonValue: "Won value",
 };
 
-/** Targets and automatic rules for the sales team (only what the app reads so far). */
+export type TargetSet = Record<TargetMetric, number>;
+export const NO_TARGETS: TargetSet = { calls: 0, followUpsDone: 0, messages: 0, won: 0, wonValue: 0 };
+
+export interface AgentTargets {
+  user: string;
+  daily: TargetSet;
+  monthly: TargetSet;
+}
+
+/** Targets and automatic rules for the sales team. */
 export interface TeamSettings {
+  dailyTargets: TargetSet;
+  monthlyTargets: TargetSet;
+  /** Agents whose targets differ from the team's */
+  agentTargets: AgentTargets[];
   /** 0 = off */
   staleAfterDays: number;
   /** 0 = off */
@@ -140,5 +173,12 @@ export const DEFAULT_SETTINGS: WorkspaceSettings = {
     shiftEnd: "18:00",
     workDays: [1, 2, 3, 4, 5, 6],
   },
-  team: { staleAfterDays: 7, expireAfterDays: 0, endOfDayReport: true },
+  team: {
+    dailyTargets: NO_TARGETS,
+    monthlyTargets: NO_TARGETS,
+    agentTargets: [],
+    staleAfterDays: 7,
+    expireAfterDays: 0,
+    endOfDayReport: true,
+  },
 };

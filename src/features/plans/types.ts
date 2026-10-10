@@ -13,3 +13,47 @@ export const planLabels: Record<PlanKey, string> = {
   growth: "Growth",
   business: "Business",
 };
+
+export const planFeatureLabels: Record<PlanFeature, string> = {
+  import: "Import leads from Excel / CSV",
+  customFields: "Custom lead fields",
+  templates: "WhatsApp & email templates",
+  monitoring: "Live status, timesheets and view as agent",
+  auditLog: "Activity feed",
+};
+
+export interface PlanDefinition {
+  key: PlanKey;
+  name: string;
+  description: string;
+  limits: PlanLimits;
+  features: PlanFeature[];
+}
+
+/** `GET /plan`: the company's plan, what it uses, and every plan to compare. */
+export interface PlanSummary {
+  plan: PlanKey;
+  billingStatus: "trial" | "paid";
+  trialEndsAt: string | null;
+  paidUntil: string | null;
+  readOnly: boolean;
+  readOnlyReason: string | null;
+  limits: PlanLimits;
+  features: PlanFeature[];
+  usage: {
+    /** Active users plus open invitations */
+    users: number;
+    activeUsers: number;
+    pendingInvitations: number;
+    leads: number;
+    storageBytes: number;
+  };
+  plans: PlanDefinition[];
+}
+
+export function formatBytes(bytes: number) {
+  if (bytes >= 1024 ** 3) return `${+(bytes / 1024 ** 3).toFixed(1)} GB`;
+  if (bytes >= 1024 ** 2) return `${+(bytes / 1024 ** 2).toFixed(1)} MB`;
+  if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${bytes} B`;
+}

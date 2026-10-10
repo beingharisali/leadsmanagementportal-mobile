@@ -1,4 +1,5 @@
 import type Ionicons from "@expo/vector-icons/Ionicons";
+import type { Href } from "expo-router";
 import type { ComponentProps } from "react";
 
 import type { PlanFeature } from "@/features/plans/types";
@@ -18,16 +19,7 @@ export interface MoreItem {
   /** Heapware staff only */
   platformAdmin?: boolean;
   /** The screen it opens; items without one show "coming soon" */
-  href?:
-    | "/pipeline"
-    | "/handovers"
-    | "/recycle-bin"
-    | "/leads/import"
-    | "/team"
-    | "/activity"
-    | "/monitoring"
-    | "/timesheets"
-    | "/performance";
+  href?: Href;
 }
 
 export interface MoreSection {
@@ -99,6 +91,41 @@ const MORE_SECTIONS: MoreSection[] = [
         roles: MANAGER_ROLES,
         href: "/recycle-bin",
       },
+    ],
+  },
+  {
+    label: "Settings",
+    items: [
+      { title: "Company", subtitle: "Name, details and logo", icon: "business-outline", roles: ["owner"], href: "/settings/company" },
+      { title: "Pipeline", subtitle: "Stages and colours", icon: "git-network-outline", roles: MANAGER_ROLES, href: "/settings/pipeline" },
+      { title: "Lead sources", icon: "magnet-outline", roles: MANAGER_ROLES, href: "/settings/sources" },
+      {
+        title: "Custom fields",
+        subtitle: "Extra details on every lead",
+        icon: "list-outline",
+        roles: MANAGER_ROLES,
+        feature: "customFields",
+        href: "/settings/custom-fields",
+      },
+      { title: "Tags", icon: "pricetags-outline", roles: MANAGER_ROLES, href: "/settings/tags" },
+      { title: "Lost reasons", icon: "close-circle-outline", roles: MANAGER_ROLES, href: "/settings/lost-reasons" },
+      {
+        title: "Tracking",
+        subtitle: "Idle time, sign-out, time zone, shift",
+        icon: "stopwatch-outline",
+        roles: MANAGER_ROLES,
+        href: "/settings/tracking",
+      },
+      {
+        title: "Team rules",
+        subtitle: "Targets, stale leads, daily report",
+        icon: "flag-outline",
+        roles: MANAGER_ROLES,
+        href: "/settings/team-rules",
+      },
+      { title: "Message templates", icon: "chatbox-ellipses-outline", roles: MANAGER_ROLES, href: "/settings/templates" },
+      { title: "Plan & usage", icon: "diamond-outline", roles: MANAGER_ROLES, href: "/settings/plan" },
+      { title: "Billing", subtitle: "Prices and invoices", icon: "receipt-outline", roles: MANAGER_ROLES, href: "/settings/billing" },
     ],
   },
   {

@@ -182,16 +182,13 @@ export const apiClient = {
   },
 };
 
-/** Plan limits and features get their own explanation, so the short message stays short. */
-const SHORT_MESSAGES: Record<string, string> = {
-  PLAN_LIMIT_REACHED: "Your plan's limit is reached",
-  FEATURE_NOT_IN_PLAN: "Not included in your plan",
-};
+/** Plan refusals come with the API's own explanation (which plan has it); owners see plans under More → Plan & usage. */
+const PLAN_CODES = ["PLAN_LIMIT_REACHED", "FEATURE_NOT_IN_PLAN"];
 
 /** Human-readable message for alerts and error states. */
 export function getErrorMessage(error: unknown) {
   if (error instanceof ApiClientError) {
-    if (error.code && SHORT_MESSAGES[error.code]) return SHORT_MESSAGES[error.code]!;
+    if (error.code && PLAN_CODES.includes(error.code)) return error.message;
     const detail = error.errors?.[0]?.message;
     return detail && error.status !== 422 ? `${error.message}: ${detail}` : error.message;
   }

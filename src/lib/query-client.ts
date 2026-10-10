@@ -1,10 +1,27 @@
-import { focusManager, onlineManager, QueryClient } from "@tanstack/react-query";
+import { focusManager, MutationCache, onlineManager, QueryCache, QueryClient } from "@tanstack/react-query";
 import * as Network from "expo-network";
 import { AppState, Platform } from "react-native";
 
 import { ApiClientError } from "./api-client";
+import { showUpgradePrompt } from "./upgrade-prompt";
+
+/**
+ * Plan limits and missing features open the upgrade message; a workspace that
+ * just went read-only refreshes the profile so its banner shows. Same as the website.
+ */
+function handlePlanError(error: unknown, { prompt }: { prompt: boolean }) {
+  if (!(error instanceof ApiClientError)) return;
+  if (prompt && (error.code === "PLAN_LIMIT_REACHED" || error.code === "FEATURE_NOT_IN_PLAN")) {
+    showUpgradePrompt({ message: error.message, details: error.details });
+  } else if (error.code === "ACCOUNT_READ_ONLY") {
+    void queryClient.invalidateQueries({ queryKey: authKeys.me });
+  }
+}
 
 export const queryClient = new QueryClient({
+  // Actions already explain their own failure in an alert (with the API's plan message), so only loads prompt.
+  queryCache: new QueryCache({ onError: (error) => handlePlanError(error, { prompt: true }) }),
+  mutationCache: new MutationCache({ onError: (error) => handlePlanError(error, { prompt: false }) }),
   defaultOptions: {
     queries: {
       staleTime: 30_000,
