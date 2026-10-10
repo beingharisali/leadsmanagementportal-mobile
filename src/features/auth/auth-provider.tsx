@@ -5,6 +5,7 @@ import { ApiClientError, setAuthToken, setUnauthorizedHandler } from "@/lib/api-
 import { authKeys, queryClient } from "@/lib/query-client";
 import { tokenStorage } from "@/lib/token-storage";
 import { setViewAs } from "@/lib/view-as";
+import { unregisterFromPush } from "@/features/push/push";
 import type { User } from "@/features/users/types";
 
 import { authApi } from "./api";
@@ -93,6 +94,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(
     async (reason: "logout" | "idle_timeout" = "logout") => {
       // Best effort: the session should end on the server, but signing out must work offline too.
+      // Signing out on purpose also stops this phone's pushes; an idle sign-out keeps reminders coming.
+      if (reason === "logout") await unregisterFromPush();
       await authApi.logout(reason).catch(() => undefined);
       await forget(reason === "idle_timeout" ? "You were signed out because the app wasn't used for a while." : null);
     },

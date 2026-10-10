@@ -35,6 +35,14 @@
           "photosPermission": "GetCloseWise opens your photos so you can attach them to leads.",
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#4F46E5",
+          "defaultChannel": "default"
+        }
       ]
     ],
     "experiments": {

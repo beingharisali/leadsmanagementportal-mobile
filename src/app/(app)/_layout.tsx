@@ -2,6 +2,7 @@ import { Stack } from "expo-router";
 import { StyleSheet, View } from "react-native";
 
 import { UpgradeDialog } from "@/features/plans/upgrade-dialog";
+import { PushManager } from "@/features/push/push-manager";
 import { markInput } from "@/features/tracking/activity";
 import { PresenceTracker } from "@/features/tracking/presence-tracker";
 
@@ -14,6 +15,7 @@ export default function AppLayout() {
     <View style={styles.flex} onTouchStart={markInput}>
       <PresenceTracker />
       <UpgradeDialog />
+      <PushManager />
       <Stack screenOptions={{ headerBackButtonDisplayMode: "minimal", headerShadowVisible: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="account" options={{ title: "My account" }} />

@@ -1,5 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { router, useNavigation } from "expo-router";
+import { useNavigation } from "expo-router";
 import { useCallback, useLayoutEffect } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
@@ -8,25 +8,12 @@ import { HeaderButton } from "@/components/ui/header-button";
 import { InfiniteList } from "@/components/ui/infinite-list";
 import { EmptyView } from "@/components/ui/state-views";
 import { useMarkNotificationsRead, useNotifications, useUnreadCount } from "@/features/notifications/hooks";
+import { openNotificationTarget } from "@/features/notifications/open";
 import { notificationIcons, type AppNotification } from "@/features/notifications/types";
 import { formatTimeAgo } from "@/lib/format";
 import { flattenPages } from "@/lib/infinite";
-import { linkParams } from "@/lib/link-params";
 import { radius, spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
-
-/** Where an alert leads: its lead, or a list that fits what it's about (same as the website). */
-function open(notification: AppNotification) {
-  if (notification.lead) return router.push({ pathname: "/leads/[id]", params: { id: notification.lead } });
-  if (notification.type === "stale_leads") return router.navigate({ pathname: "/leads", params: linkParams({ stale: "true" }) });
-  if (notification.type === "lead_expired") {
-    return router.navigate({ pathname: "/leads", params: linkParams({ assignedTo: "unassigned" }) });
-  }
-  if (notification.type === "reassignment_requested") {
-    return router.push("/handovers");
-  }
-  router.navigate("/follow-ups");
-}
 
 export default function NotificationsScreen() {
   const navigation = useNavigation();
@@ -51,7 +38,7 @@ export default function NotificationsScreen() {
         notification={item}
         onPress={() => {
           if (!item.readAt) markAsRead([item.id]);
-          open(item);
+          openNotificationTarget(item);
         }}
       />
     ),

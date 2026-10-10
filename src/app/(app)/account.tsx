@@ -9,6 +9,7 @@ import { Screen } from "@/components/ui/screen";
 import { TextField } from "@/components/ui/text-field";
 import { useChangePassword, useUpdateProfile } from "@/features/account/hooks";
 import { useAuth, useCurrentUser } from "@/features/auth/auth-provider";
+import { NotificationSettingsCard } from "@/features/push/notification-settings";
 import { passwordProblem, userRoleLabels } from "@/features/users/types";
 import { ApiClientError, fieldError, getErrorMessage } from "@/lib/api-client";
 import { getInitials } from "@/lib/format";
@@ -41,6 +42,7 @@ export default function AccountScreen() {
 
       {editable && <ProfileCard key={`${user.name}|${user.phone ?? ""}`} />}
       {editable && <PasswordCard />}
+      {editable && <NotificationSettingsCard />}
 
       <Button
         title="Sign out"
