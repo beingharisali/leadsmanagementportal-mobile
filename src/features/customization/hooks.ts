@@ -47,6 +47,8 @@ export function useLeadOptions() {
       lostReasons: settings.lostReasons,
       tags: settings.tags,
       customFields: settings.customFields,
+      tracking: settings.tracking,
+      team: settings.team,
       stageLabel,
       stageColor,
       sourceLabel,

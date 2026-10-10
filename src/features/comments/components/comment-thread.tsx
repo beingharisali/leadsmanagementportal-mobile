@@ -5,6 +5,7 @@ import { Alert, Pressable, StyleSheet, TextInput, View } from "react-native";
 import { AppText } from "@/components/ui/app-text";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/features/auth/auth-provider";
+import { markInput } from "@/features/tracking/activity";
 import { isManagerRole } from "@/features/users/types";
 import { getErrorMessage } from "@/lib/api-client";
 import { formatTimeAgo, getInitials } from "@/lib/format";
@@ -177,6 +178,7 @@ function Composer({ leadId, editing, onDone }: { leadId: string; editing?: LeadC
           ref={input}
           value={text}
           onChangeText={(value) => {
+            markInput();
             setText(value);
             setTouched(true);
           }}

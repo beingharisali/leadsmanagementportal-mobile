@@ -60,6 +60,16 @@ export interface FollowUpSummary {
   dueToday: number;
   upcoming: number;
   doneToday: number;
+  /** Managers asking with `team` only: who has overdue / due-today follow-ups */
+  team: TeamFollowUpRow[] | null;
   teamOverdue?: number;
   teamDueToday?: number;
+}
+
+export interface TeamFollowUpRow {
+  /** `null`: unassigned leads */
+  user: { id: string; name: string; isActive: boolean } | null;
+  overdue: number;
+  dueToday: number;
+  oldestDueAt: string;
 }

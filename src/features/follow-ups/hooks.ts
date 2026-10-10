@@ -45,6 +45,8 @@ function useRefresh() {
   return () => {
     void queryClient.invalidateQueries({ queryKey: followUpKeys.all });
     void queryClient.invalidateQueries({ queryKey: leadKeys.all });
+    // Completing a call follow-up can log the call.
+    void queryClient.invalidateQueries({ queryKey: ["calls"] });
   };
 }
 

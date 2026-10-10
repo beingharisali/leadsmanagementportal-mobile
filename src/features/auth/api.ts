@@ -21,6 +21,8 @@ export const authApi = {
   /** Whether the public demo is on (shows the Try as Admin / Agent buttons). */
   demoStatus: () => apiClient.get<{ enabled: boolean }>("/demo"),
   demoSignIn: (role: "admin" | "agent") => apiClient.post<SignInResult>("/demo/sign-in", { role }),
-  logout: () => apiClient.post<null>("/auth/logout", { reason: "logout" }, { timeoutMs: 10_000 }),
+  /** `idle_timeout`: the app signed out on its own after the company's inactivity limit */
+  logout: (reason: "logout" | "idle_timeout" = "logout") =>
+    apiClient.post<null>("/auth/logout", { reason }, { timeoutMs: 10_000 }),
   forgotPassword: (payload: { email: string }) => apiClient.post<null>("/auth/forgot-password", payload),
 };

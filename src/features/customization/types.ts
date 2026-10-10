@@ -52,12 +52,48 @@ export interface CustomFieldDefinition {
 
 export type CustomFieldValue = string | number | boolean;
 
+export interface TrackingSettings {
+  /** No touch for this long: idle (not counted as active work time) */
+  idleAfterMinutes: number;
+  /** No touch for this long: signed out */
+  autoLogoutMinutes: number;
+  timeZone: string;
+  /** "HH:MM" */
+  shiftStart: string;
+  shiftEnd: string;
+  /** 0 = Sunday … 6 = Saturday */
+  workDays: number[];
+}
+
+/** What a target can be set on. 0 = no target. */
+export const TARGET_METRICS = ["calls", "followUpsDone", "messages", "won", "wonValue"] as const;
+export type TargetMetric = (typeof TARGET_METRICS)[number];
+
+export const targetMetricLabels: Record<TargetMetric, string> = {
+  calls: "Calls",
+  followUpsDone: "Follow-ups done",
+  messages: "Messages",
+  won: "Deals won",
+  wonValue: "Won value",
+};
+
+/** Targets and automatic rules for the sales team (only what the app reads so far). */
+export interface TeamSettings {
+  /** 0 = off */
+  staleAfterDays: number;
+  /** 0 = off */
+  expireAfterDays: number;
+  endOfDayReport: boolean;
+}
+
 export interface WorkspaceSettings {
   pipelineStages: PipelineStage[];
   leadSources: LeadSourceOption[];
   lostReasons: string[];
   tags: TagOption[];
   customFields: CustomFieldDefinition[];
+  tracking: TrackingSettings;
+  team: TeamSettings;
 }
 
 /** Used until the organization's settings load (and by companies that never changed them). */
@@ -96,4 +132,13 @@ export const DEFAULT_SETTINGS: WorkspaceSettings = {
   ],
   tags: [],
   customFields: [],
+  tracking: {
+    idleAfterMinutes: 5,
+    autoLogoutMinutes: 30,
+    timeZone: "Asia/Karachi",
+    shiftStart: "09:00",
+    shiftEnd: "18:00",
+    workDays: [1, 2, 3, 4, 5, 6],
+  },
+  team: { staleAfterDays: 7, expireAfterDays: 0, endOfDayReport: true },
 };

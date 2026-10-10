@@ -12,7 +12,7 @@ import { useCurrentUser } from "@/features/auth/auth-provider";
 import { countFilters, LeadFiltersSheet, NO_FILTERS, type LeadFilters } from "@/features/leads/components/lead-filters-sheet";
 import { LeadRow } from "@/features/leads/components/lead-row";
 import { useLeads } from "@/features/leads/hooks";
-import type { Lead, LeadListParams } from "@/features/leads/types";
+import { LEAD_RATINGS, type Lead, type LeadListParams } from "@/features/leads/types";
 import { useCanEdit } from "@/features/organizations/hooks";
 import { isManagerRole } from "@/features/users/types";
 import { flattenPages } from "@/lib/infinite";
@@ -33,7 +33,7 @@ export default function LeadsScreen() {
   const canEdit = useCanEdit();
   const navigation = useNavigation();
   // Alerts can open this tab already filtered (?stale=true, ?assignedTo=unassigned).
-  const params = useLocalSearchParams<{ stale?: string; assignedTo?: string }>();
+  const params = useLocalSearchParams<{ stale?: string; assignedTo?: string; rating?: string; at?: string }>();
 
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<LeadFilters>(NO_FILTERS);
@@ -41,12 +41,14 @@ export default function LeadsScreen() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const debouncedSearch = useDebouncedValue(search.trim());
 
-  const link = `${params.stale ?? ""}|${params.assignedTo ?? ""}`;
-  const [appliedLink, setAppliedLink] = useState("|");
-  if (link !== appliedLink) {
-    setAppliedLink(link);
-    if (params.stale === "true") setFilters((f) => ({ ...f, stale: true }));
-    if (params.assignedTo === "unassigned" && manager) setScope("unassigned");
+  // A link replaces the filters with its own (see lib/link-params.ts).
+  const [appliedLink, setAppliedLink] = useState<string | undefined>(undefined);
+  if (params.at && params.at !== appliedLink) {
+    setAppliedLink(params.at);
+    const rating = LEAD_RATINGS.find((r) => r === params.rating);
+    setSearch("");
+    setFilters({ ...NO_FILTERS, stale: params.stale === "true", rating: rating ? [rating] : [] });
+    setScope(params.assignedTo === "unassigned" && manager ? "unassigned" : "all");
   }
 
   useLayoutEffect(() => {

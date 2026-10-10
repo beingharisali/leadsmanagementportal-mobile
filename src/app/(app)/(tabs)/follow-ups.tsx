@@ -44,14 +44,15 @@ export default function FollowUpsScreen() {
   const manager = isManagerRole(user.role);
   const now = useNow();
   const [view, setView] = useState<FollowUpView>("today");
-  // Home opens this tab on a given view (?view=overdue).
-  const { view: linkedView } = useLocalSearchParams<{ view?: string }>();
-  const [appliedLink, setAppliedLink] = useState<string | undefined>(undefined);
-  if (linkedView !== appliedLink) {
-    setAppliedLink(linkedView);
-    if (FOLLOW_UP_VIEWS.includes(linkedView as FollowUpView)) setView(linkedView as FollowUpView);
-  }
   const [team, setTeam] = useState(false);
+  // Home opens this tab on a given view (?view=overdue).
+  const link = useLocalSearchParams<{ view?: string; scope?: string; at?: string }>();
+  const [appliedLink, setAppliedLink] = useState<string | undefined>(undefined);
+  if (link.at && link.at !== appliedLink) {
+    setAppliedLink(link.at);
+    if (FOLLOW_UP_VIEWS.includes(link.view as FollowUpView)) setView(link.view as FollowUpView);
+    setTeam(link.scope === "team" && manager);
+  }
   const actions = useFollowUpActions();
 
   // `now` changes once a minute, which keeps the query key stable in between.

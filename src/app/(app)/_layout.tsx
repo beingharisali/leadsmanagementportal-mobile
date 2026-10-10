@@ -1,9 +1,18 @@
 import { Stack } from "expo-router";
+import { StyleSheet, View } from "react-native";
 
-/** Signed in: the tabs, with other screens opening on top of them. */
+import { markInput } from "@/features/tracking/activity";
+import { PresenceTracker } from "@/features/tracking/presence-tracker";
+
+/**
+ * Signed in: the tabs, with other screens opening on top of them. Every
+ * touch counts as activity for work-time tracking.
+ */
 export default function AppLayout() {
   return (
-    <Stack screenOptions={{ headerBackButtonDisplayMode: "minimal", headerShadowVisible: false }}>
+    <View style={styles.flex} onTouchStart={markInput}>
+      <PresenceTracker />
+      <Stack screenOptions={{ headerBackButtonDisplayMode: "minimal", headerShadowVisible: false }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="account" options={{ title: "My account" }} />
       <Stack.Screen name="soon" />
@@ -12,6 +21,11 @@ export default function AppLayout() {
       <Stack.Screen name="leads/new" options={{ title: "Add lead" }} />
       <Stack.Screen name="pipeline" options={{ title: "Pipeline" }} />
       <Stack.Screen name="handovers" options={{ title: "Handover requests" }} />
-    </Stack>
+      </Stack>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+});

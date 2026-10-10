@@ -2,6 +2,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { forwardRef, useState } from "react";
 import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from "react-native";
 
+import { markInput } from "@/features/tracking/activity";
 import { radius, spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
 
@@ -42,6 +43,10 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
           autoCapitalize={password ? "none" : props.autoCapitalize}
           autoCorrect={password ? false : props.autoCorrect}
           {...props}
+          onChangeText={(text) => {
+            markInput();
+            props.onChangeText?.(text);
+          }}
           onFocus={(e) => {
             setFocused(true);
             props.onFocus?.(e);

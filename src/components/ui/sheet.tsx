@@ -3,6 +3,7 @@ import { useState, type ReactNode } from "react";
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { markInput } from "@/features/tracking/activity";
 import { radius, spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
 
@@ -42,7 +43,12 @@ export function Sheet({ open, onClose, title, subtitle, children, footer }: Shee
       statusBarTranslucent
       navigationBarTranslucent
     >
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      {/* A modal is its own window on Android: report its touches too. */}
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        onTouchStart={markInput}
+      >
         <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
         <View
           style={[

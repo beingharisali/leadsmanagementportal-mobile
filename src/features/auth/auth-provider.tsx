@@ -20,7 +20,8 @@ interface AuthContextValue {
   restoreError: unknown;
   retryRestore: () => void;
   signIn: (token: string) => Promise<void>;
-  signOut: () => Promise<void>;
+  /** `idle_timeout`: signed out for inactivity (the sign-in screen says so) */
+  signOut: (reason?: "logout" | "idle_timeout") => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -87,11 +88,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("signedIn");
   }, []);
 
-  const signOut = useCallback(async () => {
-    // Best effort: the session should end on the server, but signing out must work offline too.
-    await authApi.logout().catch(() => undefined);
-    await forget(null);
-  }, [forget]);
+  const signOut = useCallback(
+    async (reason: "logout" | "idle_timeout" = "logout") => {
+      // Best effort: the session should end on the server, but signing out must work offline too.
+      await authApi.logout(reason).catch(() => undefined);
+      await forget(reason === "idle_timeout" ? "You were signed out because the app wasn't used for a while." : null);
+    },
+    [forget],
+  );
 
   const value = useMemo<AuthContextValue>(
     () => ({

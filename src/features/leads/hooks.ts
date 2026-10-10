@@ -115,12 +115,18 @@ export function useAssignLead(id: string) {
 
 export interface LeadStats {
   total: number;
+  createdThisMonth: number;
+  /** Managers only (0 for agents) */
+  unassigned: number;
   openCount: number;
   openBudget: number;
   wonCount: number;
   wonBudget: number;
   winRate: number;
   byStatus: { status: string; count: number; budget: number }[];
+  bySource: { source: string; count: number }[];
+  /** Open leads per rating */
+  byRating: Record<LeadRating, number>;
 }
 
 /** Counts and value per stage (agents: their own leads). */

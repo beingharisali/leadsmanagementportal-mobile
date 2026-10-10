@@ -28,6 +28,8 @@ export interface User {
   emailVerified: boolean;
   /** Heapware staff with access to the platform console */
   isPlatformAdmin?: boolean;
+  /** Only during a support session: Heapware staff signed in as this user (read-only) */
+  support?: { sessionId: string; staffName: string; startedAt: string; expiresAt: string };
   /** Only on the signed-in user (`/auth/me`) */
   organization?: OrganizationSummary;
   lastLoginAt?: string;

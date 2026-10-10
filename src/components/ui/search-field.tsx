@@ -1,6 +1,7 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
 
+import { markInput } from "@/features/tracking/activity";
 import { radius, spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
 
@@ -17,7 +18,10 @@ export function SearchField({ value, onChangeText, placeholder }: SearchFieldPro
       <Ionicons name="search" size={18} color={colors.mutedText} />
       <TextInput
         value={value}
-        onChangeText={onChangeText}
+        onChangeText={(text) => {
+          markInput();
+          onChangeText(text);
+        }}
         placeholder={placeholder}
         placeholderTextColor={colors.mutedText}
         style={[styles.input, { color: colors.text }]}
