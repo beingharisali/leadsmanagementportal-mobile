@@ -9,20 +9,26 @@ import { spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
 
 import { leadRatingLabels, leadSortLabels } from "../config";
+import { useLeadTags } from "../hooks";
 import { LEAD_RATINGS, LEAD_SORTS, type LeadRating, type LeadSort } from "../types";
 
 export interface LeadFilters {
   status: string[];
+  source: string[];
+  /** One tag, or "" */
+  tag: string;
   rating: LeadRating[];
   stale: boolean;
   sort: LeadSort;
 }
 
-export const NO_FILTERS: LeadFilters = { status: [], rating: [], stale: false, sort: "-createdAt" };
+export const NO_FILTERS: LeadFilters = { status: [], source: [], tag: "", rating: [], stale: false, sort: "-createdAt" };
 
 /** How many filters are on (the sort order doesn't count). */
 export function countFilters(filters: LeadFilters) {
-  return filters.status.length + filters.rating.length + (filters.stale ? 1 : 0);
+  return (
+    filters.status.length + filters.source.length + filters.rating.length + (filters.tag ? 1 : 0) + (filters.stale ? 1 : 0)
+  );
 }
 
 function toggle<T>(list: T[], value: T) {
@@ -41,7 +47,9 @@ interface LeadFiltersSheetProps {
 /** Stage, rating, "needs attention" and sort order for the leads list. Applies as you tap. */
 export function LeadFiltersSheet({ open, onClose, filters, onChange, total }: LeadFiltersSheetProps) {
   const { colors } = useTheme();
-  const { stages } = useLeadOptions();
+  const { stages, sources, tags: companyTags } = useLeadOptions();
+  const usedTags = useLeadTags().data ?? [];
+  const tags = [...new Set([...companyTags.map((t) => t.name), ...usedTags])];
 
   return (
     <Sheet
@@ -71,6 +79,30 @@ export function LeadFiltersSheet({ open, onClose, filters, onChange, total }: Le
           />
         ))}
       </Section>
+
+      <Section title="Source">
+        {sources.map((source) => (
+          <Chip
+            key={source.key}
+            label={source.label}
+            selected={filters.source.includes(source.key)}
+            onPress={() => onChange({ ...filters, source: toggle(filters.source, source.key) })}
+          />
+        ))}
+      </Section>
+
+      {tags.length > 0 && (
+        <Section title="Tag">
+          {tags.map((tag) => (
+            <Chip
+              key={tag}
+              label={tag}
+              selected={filters.tag === tag}
+              onPress={() => onChange({ ...filters, tag: filters.tag === tag ? "" : tag })}
+            />
+          ))}
+        </Section>
+      )}
 
       <Section title="Rating">
         {LEAD_RATINGS.map((rating) => (

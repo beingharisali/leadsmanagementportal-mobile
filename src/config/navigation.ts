@@ -18,7 +18,7 @@ export interface MoreItem {
   /** Heapware staff only */
   platformAdmin?: boolean;
   /** The screen it opens; items without one show "coming soon" */
-  href?: "/pipeline" | "/handovers";
+  href?: "/pipeline" | "/handovers" | "/recycle-bin" | "/leads/import";
 }
 
 export interface MoreSection {
@@ -47,7 +47,21 @@ const MORE_SECTIONS: MoreSection[] = [
       { title: "Timesheets", icon: "time-outline", roles: MANAGER_ROLES, feature: "monitoring" },
       { title: "Performance", icon: "trophy-outline", roles: MANAGER_ROLES, feature: "monitoring" },
       { title: "Activity feed", icon: "pulse-outline", roles: MANAGER_ROLES, feature: "auditLog" },
-      { title: "Recycle bin", icon: "trash-outline", roles: MANAGER_ROLES },
+      {
+        title: "Import leads",
+        subtitle: "From an Excel or CSV file",
+        icon: "cloud-upload-outline",
+        roles: MANAGER_ROLES,
+        feature: "import",
+        href: "/leads/import",
+      },
+      {
+        title: "Recycle bin",
+        subtitle: "Restore deleted leads",
+        icon: "trash-outline",
+        roles: MANAGER_ROLES,
+        href: "/recycle-bin",
+      },
     ],
   },
   {

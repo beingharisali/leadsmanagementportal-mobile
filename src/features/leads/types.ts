@@ -45,6 +45,10 @@ export interface Lead {
   assignedAt?: string;
   createdBy: UserSummary;
   isSample: boolean;
+  /** In the recycle bin */
+  isDeleted?: boolean;
+  deletedAt?: string;
+  deletedBy?: UserSummary;
   createdAt: string;
   updatedAt: string;
 }
@@ -56,6 +60,8 @@ export interface LeadListParams {
   limit?: number;
   search?: string;
   status?: string[];
+  source?: string[];
+  tag?: string;
   rating?: LeadRating[];
   /** Managers only: a user id, "me" or "unassigned" */
   assignedTo?: string;

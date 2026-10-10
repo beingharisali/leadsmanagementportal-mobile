@@ -7,6 +7,7 @@ import type { UserRole } from "./types";
 export interface AssignableUser {
   id: string;
   name: string;
+  email: string;
   role: UserRole;
 }
 

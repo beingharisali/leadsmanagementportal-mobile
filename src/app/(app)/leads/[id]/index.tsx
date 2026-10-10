@@ -17,6 +17,7 @@ import { TextField } from "@/components/ui/text-field";
 import { ActivityItem } from "@/features/activities/components/activity-item";
 import { AttachmentsCard } from "@/features/attachments/components/attachments-card";
 import { attachmentKeys } from "@/features/attachments/hooks";
+import { useCurrentUser } from "@/features/auth/auth-provider";
 import { LogCallSheet } from "@/features/calls/components/log-call-sheet";
 import { CommentThread } from "@/features/comments/components/comment-thread";
 import { formatCustomFieldValue, useLeadOptions } from "@/features/customization/hooks";
@@ -28,11 +29,20 @@ import { useFollowUps } from "@/features/follow-ups/hooks";
 import { leadRatingLabels, leadTimelineLabels } from "@/features/leads/config";
 import { RatingBadge, StageBadge } from "@/features/leads/components/lead-badges";
 import { MessageSheet } from "@/features/leads/components/message-sheet";
+import { LeadViewsCard } from "@/features/leads/components/lead-views-card";
 import { OwnerCard } from "@/features/leads/components/owner-card";
 import { StageSheet } from "@/features/leads/components/stage-sheet";
-import { leadsApi, useAddNote, useLead, useLeadActivities, useSetLeadRating } from "@/features/leads/hooks";
+import {
+  leadsApi,
+  useAddNote,
+  useDeleteLead,
+  useLead,
+  useLeadActivities,
+  useSetLeadRating,
+} from "@/features/leads/hooks";
 import { LEAD_RATINGS, type Lead, type LeadRating } from "@/features/leads/types";
 import { useCanEdit } from "@/features/organizations/hooks";
+import { isManagerRole } from "@/features/users/types";
 import { ApiClientError, getErrorMessage } from "@/lib/api-client";
 import { flattenPages } from "@/lib/infinite";
 import { formatCurrency, formatDate, formatTimeAgo, telUrl } from "@/lib/format";
@@ -84,6 +94,27 @@ export default function LeadDetailScreen() {
 function LeadDetail({ lead, onRefresh }: { lead: Lead; onRefresh: () => Promise<unknown> }) {
   const { colors } = useTheme();
   const canEdit = useCanEdit();
+  const manager = isManagerRole(useCurrentUser().role);
+  const deleteLead = useDeleteLead();
+
+  function confirmDelete() {
+    Alert.alert(
+      "Move this lead to the recycle bin?",
+      `${lead.businessName} will be hidden from every list. You can restore it from the recycle bin.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Move to bin",
+          style: "destructive",
+          onPress: () =>
+            deleteLead.mutate(lead.id, {
+              onSuccess: () => router.back(),
+              onError: (error) => Alert.alert("Couldn't delete the lead", getErrorMessage(error)),
+            }),
+        },
+      ],
+    );
+  }
   const { stageLabel, sourceLabel, customFields } = useLeadOptions();
   const activities = useLeadActivities(lead.id);
   const followUps = useFollowUps({ leadId: lead.id, status: "pending", limit: 20 });
@@ -272,6 +303,11 @@ function LeadDetail({ lead, onRefresh }: { lead: Lead; onRefresh: () => Promise<
         )}
       </Card>
 
+      {manager && <LeadViewsCard leadId={lead.id} />}
+      {manager && canEdit && (
+        <Button title="Move to recycle bin" variant="ghost" icon="trash-outline" onPress={confirmDelete} style={styles.delete} />
+      )}
+
       <StageSheet lead={lead} open={stageOpen} onClose={() => setStageOpen(false)} />
       <RatingSheet lead={lead} open={ratingOpen} onClose={() => setRatingOpen(false)} />
       <ScheduleSheet lead={lead} open={scheduleOpen} onClose={() => setScheduleOpen(false)} />
@@ -418,4 +454,5 @@ const styles = StyleSheet.create({
   detailIcon: { marginTop: 2 },
   history: { gap: spacing.lg, marginTop: spacing.sm },
   note: { gap: spacing.sm },
+  delete: { alignSelf: "center" },
 });

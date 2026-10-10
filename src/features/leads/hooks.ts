@@ -1,9 +1,10 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { Activity } from "@/features/activities/types";
-import { apiClient, type Paginated } from "@/lib/api-client";
+import { apiClient, getErrorMessage, type Paginated } from "@/lib/api-client";
 import { nextPage } from "@/lib/infinite";
 
+import type { ImportLeadRow, ImportResult } from "./import";
 import type { Lead, LeadListParams, LeadPayload, LeadRating } from "./types";
 
 export const leadKeys = {
@@ -132,4 +133,118 @@ export interface LeadStats {
 /** Counts and value per stage (agents: their own leads). */
 export function useLeadStats() {
   return useQuery({ queryKey: [...leadKeys.all, "stats"], queryFn: () => apiClient.get<LeadStats>("/leads/stats") });
+}
+
+// ---- Duplicates, tags, recycle bin, views, bulk assign ----
+
+export interface DuplicateLead {
+  id: string;
+  name: string;
+  businessName: string;
+  phone: string;
+  email: string | null;
+  status: string;
+  assignedTo: { id: string; name: string } | null;
+}
+
+/** Leads that already have this phone or email (checked while typing in the lead form). */
+export function useDuplicateCheck(params: { phone: string; email: string; excludeId?: string }) {
+  const digits = params.phone.replace(/\D/g, "");
+  const phone = digits.length >= 7 ? params.phone : undefined;
+  const email = params.email.includes("@") ? params.email : undefined;
+  return useQuery({
+    queryKey: [...leadKeys.all, "duplicates", { phone, email, excludeId: params.excludeId }],
+    queryFn: () => apiClient.get<DuplicateLead[]>("/leads/duplicates", { phone, email, excludeId: params.excludeId }),
+    enabled: !!phone || !!email,
+    staleTime: 10_000,
+  });
+}
+
+/** Every tag used on the company's leads, for suggestions. */
+export function useLeadTags() {
+  return useQuery({
+    queryKey: [...leadKeys.all, "tags"],
+    queryFn: () => apiClient.get<string[]>("/leads/tags"),
+    staleTime: 60_000,
+  });
+}
+
+/** Managers: deleted leads, newest first. */
+export function useTrash(search: string) {
+  return useInfiniteQuery({
+    queryKey: [...leadKeys.all, "trash", search],
+    queryFn: ({ pageParam }) =>
+      apiClient.getPaginated<Lead>("/leads/trash", { page: pageParam, limit: 25, search: search || undefined }),
+    initialPageParam: 1,
+    getNextPageParam: (last: Paginated<Lead>) => nextPage(last),
+  });
+}
+
+/** Managers: move a lead to the recycle bin. */
+export function useDeleteLead() {
+  const refresh = useRefreshLead();
+  return useMutation({ mutationFn: (id: string) => apiClient.delete<null>(`/leads/${id}`), onSuccess: () => refresh() });
+}
+
+export function useRestoreLead() {
+  const refresh = useRefreshLead();
+  return useMutation({ mutationFn: (id: string) => apiClient.post<Lead>(`/leads/${id}/restore`), onSuccess: () => refresh() });
+}
+
+export interface LeadViews {
+  views: Activity[];
+  timeByUser: { user: { id: string; name: string }; activeMs: number; idleMs: number; lastAt: string }[];
+}
+
+/** Managers: who opened the lead and how long each person worked on it. */
+export function useLeadViews(id: string, enabled: boolean) {
+  return useQuery({
+    queryKey: [...leadKeys.detail(id), "views"],
+    queryFn: () => apiClient.get<LeadViews>(`/leads/${id}/views`),
+    enabled,
+  });
+}
+
+/** Managers: give several leads to one person (or nobody). */
+export function useBulkAssign() {
+  const refresh = useRefreshLead();
+  return useMutation({
+    mutationFn: (payload: { leadIds: string[]; assigneeId: string | null }) =>
+      apiClient.post<{ updated: number; skipped: number; notFound: number }>("/leads/assign", payload),
+    onSuccess: () => refresh(),
+  });
+}
+
+/** Rows per request; the API takes at most 200. Same as the website. */
+const IMPORT_BATCH_SIZE = 100;
+
+/**
+ * Managers: sends spreadsheet rows in batches, reporting progress (0–1).
+ * If a batch fails, the rest are reported as "failed" so they can be retried.
+ */
+export function useImportLeads() {
+  const refresh = useRefreshLead();
+  return useMutation({
+    mutationFn: async ({ rows, onProgress }: { rows: ImportLeadRow[]; onProgress?: (done: number) => void }) => {
+      const total: ImportResult = { created: 0, duplicates: 0, invalid: 0, failed: 0, results: [] };
+      for (let i = 0; i < rows.length; i += IMPORT_BATCH_SIZE) {
+        try {
+          const result = await apiClient.post<ImportResult>("/leads/import", { rows: rows.slice(i, i + IMPORT_BATCH_SIZE) });
+          total.created += result.created;
+          total.duplicates += result.duplicates;
+          total.invalid += result.invalid;
+          total.results.push(...result.results);
+        } catch (error) {
+          const message = `Not imported: ${getErrorMessage(error)}`;
+          const remaining = rows.slice(i);
+          total.failed = remaining.length;
+          total.results.push(...remaining.map((r) => ({ row: r.row, status: "failed" as const, message })));
+          break;
+        }
+        onProgress?.(Math.min(i + IMPORT_BATCH_SIZE, rows.length) / rows.length);
+      }
+      return total;
+    },
+    onSettled: () => refresh(),
+  });
 }

@@ -15,24 +15,49 @@ interface LeadRowProps {
   lead: Lead;
   /** Managers see who each lead belongs to */
   showAssignee?: boolean;
+  /** Selecting several leads: a tap toggles instead of opening the lead */
+  selecting?: boolean;
+  selected?: boolean;
+  onToggle?: (lead: Lead) => void;
+  /** Starts selecting (managers) */
+  onLongPress?: (lead: Lead) => void;
 }
 
 /** One lead in the list: business, contact, stage and rating. Tap to open. */
-export const LeadRow = memo(function LeadRow({ lead, showAssignee }: LeadRowProps) {
+export const LeadRow = memo(function LeadRow({
+  lead,
+  showAssignee,
+  selecting,
+  selected,
+  onToggle,
+  onLongPress,
+}: LeadRowProps) {
   const { colors } = useTheme();
   const contact = [lead.name, lead.city].filter(Boolean).join(" · ");
 
   return (
     <Pressable
-      accessibilityRole="button"
+      accessibilityRole={selecting ? "checkbox" : "button"}
+      accessibilityState={selecting ? { checked: selected } : undefined}
       accessibilityLabel={`${lead.businessName}, ${lead.name}`}
-      onPress={() => router.push({ pathname: "/leads/[id]", params: { id: lead.id } })}
+      onPress={() =>
+        selecting ? onToggle?.(lead) : router.push({ pathname: "/leads/[id]", params: { id: lead.id } })
+      }
+      onLongPress={onLongPress ? () => onLongPress(lead) : undefined}
+      delayLongPress={350}
       style={({ pressed }) => [
         styles.row,
-        { backgroundColor: colors.card, borderColor: colors.border },
-        pressed && { backgroundColor: colors.primarySoft },
+        { backgroundColor: colors.card, borderColor: selected ? colors.primary : colors.border },
+        (pressed || selected) && { backgroundColor: colors.primarySoft },
       ]}
     >
+      {selecting && (
+        <Ionicons
+          name={selected ? "checkmark-circle" : "ellipse-outline"}
+          size={24}
+          color={selected ? colors.primary : colors.mutedText}
+        />
+      )}
       <View style={styles.main}>
         <AppText weight="600" numberOfLines={1}>
           {lead.businessName}
@@ -49,7 +74,7 @@ export const LeadRow = memo(function LeadRow({ lead, showAssignee }: LeadRowProp
           {lead.lastContactedAt ? `Contacted ${formatTimeAgo(lead.lastContactedAt)}` : "Not contacted yet"}
         </AppText>
       </View>
-      <Ionicons name="chevron-forward" size={18} color={colors.mutedText} />
+      {!selecting && <Ionicons name="chevron-forward" size={18} color={colors.mutedText} />}
     </Pressable>
   );
 });

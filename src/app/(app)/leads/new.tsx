@@ -6,7 +6,7 @@ import { LeadForm } from "@/features/leads/components/lead-form";
 import { useCreateLead } from "@/features/leads/hooks";
 import { isManagerRole } from "@/features/users/types";
 
-/** Add a lead. Agents' leads are always theirs; managers can take it or leave it unassigned. */
+/** Add a lead. Agents' leads are always theirs; managers pick who gets it (or nobody). */
 export default function NewLeadScreen() {
   const user = useCurrentUser();
   const create = useCreateLead();
@@ -16,9 +16,9 @@ export default function NewLeadScreen() {
     <Screen>
       <LeadForm
         submitLabel="Add lead"
-        allowAssignToMe={manager}
-        onSubmit={async ({ assignToMe, ...payload }) => {
-          const lead = await create.mutateAsync({ ...payload, ...(manager && assignToMe && { assignedTo: user.id }) });
+        chooseAssignee={manager}
+        onSubmit={async (payload) => {
+          const lead = await create.mutateAsync(payload);
           router.replace({ pathname: "/leads/[id]", params: { id: lead.id } });
         }}
       />

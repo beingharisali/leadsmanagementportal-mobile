@@ -6,15 +6,20 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DateTimeField } from "@/components/ui/date-time-field";
 import { SelectField } from "@/components/ui/select-field";
+import { TagsInput } from "@/components/ui/tags-input";
 import { TextField } from "@/components/ui/text-field";
 import { useLeadOptions } from "@/features/customization/hooks";
 import type { CustomFieldDefinition, CustomFieldValue } from "@/features/customization/types";
+import { useAssignableUsers } from "@/features/users/hooks";
+import { userRoleLabels } from "@/features/users/types";
 import { ApiClientError, getErrorMessage } from "@/lib/api-client";
 import { spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
 
 import { BUSINESS_TYPES, leadTimelineLabels } from "../config";
+import { useLeadTags } from "../hooks";
 import { LEAD_TIMELINES, type Lead, type LeadPayload, type LeadTimeline } from "../types";
+import { DuplicateWarning } from "./duplicate-warning";
 
 /** Form values are what inputs produce (strings, or booleans for yes/no); `toPayload` converts them. */
 interface Values {
@@ -30,6 +35,7 @@ interface Values {
   requirement: string;
   budget: string;
   timeline: LeadTimeline | "";
+  tags: string[];
   customFields: Record<string, string | boolean>;
 }
 
@@ -47,6 +53,7 @@ function initialValues(lead?: Lead): Values {
     requirement: lead?.requirement ?? "",
     budget: lead?.budget != null ? String(lead.budget) : "",
     timeline: lead?.timeline ?? "",
+    tags: lead?.tags ?? [],
     customFields: Object.fromEntries(
       Object.entries(lead?.customFields ?? {}).map(([key, value]) => [
         key,
@@ -70,6 +77,7 @@ function toPayload(values: Values): LeadPayload {
     requirement: values.requirement.trim(),
     budget: values.budget.trim() === "" ? null : Number(values.budget.replace(/,/g, "")),
     timeline: values.timeline === "" ? null : values.timeline,
+    tags: values.tags,
     customFields: Object.fromEntries(
       Object.entries(values.customFields).map(([key, value]) => [
         key,
@@ -99,6 +107,13 @@ function validate(values: Values, customFields: CustomFieldDefinition[]) {
   return errors;
 }
 
+/** The company's tags (Settings) first, then every tag already used on a lead. */
+function useTagSuggestions() {
+  const { tags } = useLeadOptions();
+  const used = useLeadTags().data;
+  return [...new Set([...tags.map((t) => t.name), ...(used ?? [])])];
+}
+
 /** "2026-10-06" ↔ a local Date, for date-only custom fields. */
 function dayToDate(day: string) {
   const [y, m, d] = day.split("-").map(Number);
@@ -112,18 +127,19 @@ function dateToDay(date: Date) {
 interface LeadFormProps {
   lead?: Lead;
   submitLabel: string;
-  /** Managers adding a lead can take it themselves */
-  allowAssignToMe?: boolean;
-  onSubmit: (payload: LeadPayload & { assignToMe?: boolean }) => Promise<unknown>;
+  /** Managers adding a lead choose who gets it (empty = unassigned) */
+  chooseAssignee?: boolean;
+  onSubmit: (payload: LeadPayload & { assignedTo?: string | null }) => Promise<unknown>;
 }
 
 /** Add or edit a lead: contact, business, requirement, deal and the company's own fields. */
-export function LeadForm({ lead, submitLabel, allowAssignToMe, onSubmit }: LeadFormProps) {
-  const { colors } = useTheme();
+export function LeadForm({ lead, submitLabel, chooseAssignee, onSubmit }: LeadFormProps) {
   const { sources, customFields } = useLeadOptions();
   const [values, setValues] = useState(() => initialValues(lead));
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [assignToMe, setAssignToMe] = useState(false);
+  const [assignee, setAssignee] = useState("");
+  const users = useAssignableUsers(!!chooseAssignee);
+  const tagSuggestions = useTagSuggestions();
   const [saving, setSaving] = useState(false);
 
   function set<K extends keyof Values>(key: K, value: Values[K]) {
@@ -146,7 +162,7 @@ export function LeadForm({ lead, submitLabel, allowAssignToMe, onSubmit }: LeadF
     }
     setSaving(true);
     try {
-      await onSubmit({ ...toPayload(values), ...(allowAssignToMe && { assignToMe }) });
+      await onSubmit({ ...toPayload(values), ...(chooseAssignee && { assignedTo: assignee || null }) });
     } catch (error) {
       // Field problems from the API (duplicate phone, custom field rules) go next to the field.
       const apiErrors =
@@ -212,6 +228,7 @@ export function LeadForm({ lead, submitLabel, allowAssignToMe, onSubmit }: LeadF
           autoCapitalize="none"
           autoCorrect={false}
         />
+        <DuplicateWarning phone={values.phone} email={values.email} excludeId={lead?.id} />
       </Card>
 
       <Card>
@@ -254,6 +271,13 @@ export function LeadForm({ lead, submitLabel, allowAssignToMe, onSubmit }: LeadF
           options={LEAD_TIMELINES.map((t) => ({ value: t, label: leadTimelineLabels[t] }))}
           clearable
         />
+        <TagsInput
+          label="Tags"
+          value={values.tags}
+          onChange={(tags) => set("tags", tags)}
+          suggestions={tagSuggestions}
+          hint="Up to 20, e.g. priority or a campaign name"
+        />
       </Card>
 
       {customFields.length > 0 && (
@@ -271,20 +295,19 @@ export function LeadForm({ lead, submitLabel, allowAssignToMe, onSubmit }: LeadF
         </Card>
       )}
 
-      {allowAssignToMe && (
-        <Card style={styles.switchCard}>
-          <View style={styles.flex}>
-            <AppText variant="label">Assign to me</AppText>
-            <AppText variant="small" muted>
-              Otherwise it stays unassigned for you to give to an agent.
-            </AppText>
-          </View>
-          <Switch
-            value={assignToMe}
-            onValueChange={setAssignToMe}
-            trackColor={{ true: colors.primary }}
-            accessibilityLabel="Assign to me"
+      {chooseAssignee && (
+        <Card>
+          <SelectField
+            label="Assign to"
+            value={assignee}
+            onChange={setAssignee}
+            options={(users.data ?? []).map((u) => ({ value: u.id, label: `${u.name} · ${userRoleLabels[u.role]}` }))}
+            placeholder="Unassigned"
+            clearable
           />
+          <AppText variant="small" muted>
+            They get an alert. Leave it empty to give it to someone later.
+          </AppText>
         </Card>
       )}
 

@@ -53,9 +53,12 @@ export default function MoreScreen() {
                   subtitle={
                     item.href === "/handovers" && pendingHandovers ? `${pendingHandovers} waiting for you` : item.subtitle
                   }
-                  onPress={() =>
-                    item.href ? router.push(item.href) : router.push({ pathname: "/soon", params: { title: item.title } })
-                  }
+                  onPress={() => {
+                    if (item.feature && !features.includes(item.feature)) {
+                      Alert.alert("Not included in your plan", `${item.title} comes with a higher plan. The owner can upgrade on the website.`);
+                    } else if (item.href) router.push(item.href);
+                    else router.push({ pathname: "/soon", params: { title: item.title } });
+                  }}
                 />
               </View>
             ))}

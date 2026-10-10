@@ -23,8 +23,11 @@ export function TeamFollowUpsCard() {
   const data = summary.data;
   const rows = data?.team ?? [];
 
-  const openTeam = (view: "overdue" | "today") =>
-    router.navigate({ pathname: "/follow-ups", params: linkParams({ view, scope: "team" }) });
+  const openTeam = (view: "overdue" | "today", assignedTo?: string) =>
+    router.navigate({
+      pathname: "/follow-ups",
+      params: linkParams({ view, scope: "team", ...(assignedTo && { assignedTo }) }),
+    });
 
   return (
     <Card style={data?.teamOverdue ? { borderColor: colors.danger } : undefined}>
@@ -45,7 +48,7 @@ export function TeamFollowUpsCard() {
             <Pressable
               key={row.user?.id ?? "unassigned"}
               accessibilityRole="button"
-              onPress={() => openTeam(row.overdue > 0 ? "overdue" : "today")}
+              onPress={() => openTeam(row.overdue > 0 ? "overdue" : "today", row.user?.id)}
               style={({ pressed }) => [
                 styles.row,
                 row.overdue > 0 && { backgroundColor: colors.dangerSoft },

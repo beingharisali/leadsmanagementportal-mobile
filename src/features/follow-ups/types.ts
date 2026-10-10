@@ -38,12 +38,15 @@ export interface FollowUpListParams {
   limit?: number;
   leadId?: string;
   status?: FollowUpStatus | "all";
+  type?: FollowUpType;
   /** ISO date-times: due at or after / at or before */
   from?: string;
   until?: string;
   overdue?: boolean;
   /** Managers only: "all" includes every agent's follow-ups */
   scope?: "mine" | "all";
+  /** Managers only, with scope "all": one agent's */
+  assignedTo?: string;
   sort?: "dueAt" | "-dueAt" | "-completedAt";
 }
 
