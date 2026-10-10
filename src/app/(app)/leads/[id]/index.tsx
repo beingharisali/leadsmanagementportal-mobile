@@ -1,4 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useQueryClient } from "@tanstack/react-query";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useEffect, useState, type ComponentProps, type ReactNode } from "react";
 import { Alert, Linking, Pressable, StyleSheet, View } from "react-native";
@@ -14,7 +15,10 @@ import { Sheet } from "@/components/ui/sheet";
 import { EmptyView, ErrorView, LoadingView } from "@/components/ui/state-views";
 import { TextField } from "@/components/ui/text-field";
 import { ActivityItem } from "@/features/activities/components/activity-item";
+import { AttachmentsCard } from "@/features/attachments/components/attachments-card";
+import { attachmentKeys } from "@/features/attachments/hooks";
 import { LogCallSheet } from "@/features/calls/components/log-call-sheet";
+import { CommentThread } from "@/features/comments/components/comment-thread";
 import { formatCustomFieldValue, useLeadOptions } from "@/features/customization/hooks";
 import { LOST_STAGE } from "@/features/customization/types";
 import { FollowUpRow } from "@/features/follow-ups/components/follow-up-row";
@@ -24,6 +28,7 @@ import { useFollowUps } from "@/features/follow-ups/hooks";
 import { leadRatingLabels, leadTimelineLabels } from "@/features/leads/config";
 import { RatingBadge, StageBadge } from "@/features/leads/components/lead-badges";
 import { MessageSheet } from "@/features/leads/components/message-sheet";
+import { OwnerCard } from "@/features/leads/components/owner-card";
 import { StageSheet } from "@/features/leads/components/stage-sheet";
 import { leadsApi, useAddNote, useLead, useLeadActivities, useSetLeadRating } from "@/features/leads/hooks";
 import { LEAD_RATINGS, type Lead, type LeadRating } from "@/features/leads/types";
@@ -84,6 +89,7 @@ function LeadDetail({ lead, onRefresh }: { lead: Lead; onRefresh: () => Promise<
   const followUps = useFollowUps({ leadId: lead.id, status: "pending", limit: 20 });
   const followUpActions = useFollowUpActions();
   const now = useNow();
+  const queryClient = useQueryClient();
 
   const [stageOpen, setStageOpen] = useState(false);
   const [ratingOpen, setRatingOpen] = useState(false);
@@ -105,7 +111,15 @@ function LeadDetail({ lead, onRefresh }: { lead: Lead; onRefresh: () => Promise<
 
   return (
     <Screen
-      onRefresh={() => Promise.all([onRefresh(), activities.refetch(), followUps.refetch()])}
+      onRefresh={() =>
+        Promise.all([
+          onRefresh(),
+          activities.refetch(),
+          followUps.refetch(),
+          queryClient.invalidateQueries({ queryKey: ["comments", lead.id] }),
+          queryClient.invalidateQueries({ queryKey: attachmentKeys.list(lead.id) }),
+        ])
+      }
     >
       <Stack.Screen
         options={{
@@ -192,6 +206,8 @@ function LeadDetail({ lead, onRefresh }: { lead: Lead; onRefresh: () => Promise<
         )}
       </Card>
 
+      <OwnerCard lead={lead} canWrite={canEdit} />
+
       <Card>
         <AppText variant="heading">Requirement</AppText>
         <AppText>{lead.requirement}</AppText>
@@ -216,7 +232,6 @@ function LeadDetail({ lead, onRefresh }: { lead: Lead; onRefresh: () => Promise<
           label="Source"
           value={`${sourceLabel(lead.source)}${lead.sourceDetail ? ` · ${lead.sourceDetail}` : ""}`}
         />
-        <Detail icon="person-circle-outline" label="Assigned to" value={lead.assignedTo?.name ?? "Unassigned"} />
         <Detail
           icon="calendar-outline"
           label="Added"
@@ -231,6 +246,13 @@ function LeadDetail({ lead, onRefresh }: { lead: Lead; onRefresh: () => Promise<
           />
         ))}
       </Card>
+
+      <Card>
+        <AppText variant="heading">Team comments</AppText>
+        <CommentThread leadId={lead.id} canWrite={canEdit} />
+      </Card>
+
+      <AttachmentsCard leadId={lead.id} canWrite={canEdit} />
 
       <Card>
         <AppText variant="heading">Notes & history</AppText>

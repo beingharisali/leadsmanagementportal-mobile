@@ -22,7 +22,7 @@ function open(notification: AppNotification) {
     return router.navigate({ pathname: "/leads", params: { assignedTo: "unassigned" } });
   }
   if (notification.type === "reassignment_requested") {
-    return router.push({ pathname: "/soon", params: { title: "Handover requests" } });
+    return router.push("/handovers");
   }
   router.navigate("/follow-ups");
 }

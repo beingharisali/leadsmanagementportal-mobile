@@ -109,6 +109,43 @@ async function request<T>(path: string, { method, body, params, timeoutMs = 60_0
   return payload;
 }
 
+/** Full URL of an API path, e.g. for downloading a file. */
+export function apiUrl(path: string) {
+  return `${API_URL}${path}`;
+}
+
+/** The headers every API request carries, for transfers that don't go through `fetch` (uploads, downloads). */
+export function authHeaders(): Record<string, string> {
+  return {
+    "User-Agent": USER_AGENT,
+    ...(authToken && { Authorization: `Bearer ${authToken}` }),
+  };
+}
+
+/**
+ * Reads an API response body from a transfer done outside `request` (an
+ * upload): returns the data or throws `ApiClientError`, the same way.
+ */
+export function readEnvelope<T>(status: number, body: string): T {
+  let payload: ApiResponse<T> | null = null;
+  try {
+    payload = JSON.parse(body) as ApiResponse<T>;
+  } catch {
+    // Not JSON: e.g. a proxy error page
+  }
+  if (status >= 200 && status < 300 && payload?.success) return payload.data;
+  const failure = payload && !payload.success ? payload : undefined;
+  const error = new ApiClientError(
+    failure?.message ?? `Request failed (${status})`,
+    status,
+    failure?.errors,
+    failure?.code,
+    failure?.details,
+  );
+  if (status === 401 && authToken) onUnauthorized?.(error.message);
+  throw error;
+}
+
 export interface Paginated<T> {
   items: T[];
   meta: PaginationMeta;

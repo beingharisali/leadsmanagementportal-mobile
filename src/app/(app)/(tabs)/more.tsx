@@ -7,7 +7,8 @@ import { ListRow } from "@/components/ui/list-row";
 import { Screen } from "@/components/ui/screen";
 import { moreSectionsFor } from "@/config/navigation";
 import { useAuth, useCurrentUser } from "@/features/auth/auth-provider";
-import { userRoleLabels } from "@/features/users/types";
+import { usePendingReassignmentCount } from "@/features/reassignments/hooks";
+import { isManagerRole, userRoleLabels } from "@/features/users/types";
 import { APP_VERSION } from "@/lib/config";
 import { spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
@@ -17,6 +18,7 @@ export default function MoreScreen() {
   const { signOut } = useAuth();
   const { colors } = useTheme();
   const features = user.organization?.features ?? [];
+  const pendingHandovers = usePendingReassignmentCount(isManagerRole(user.role)).data ?? 0;
 
   function confirmSignOut() {
     Alert.alert("Sign out?", "You'll need your email and password to sign in again.", [
@@ -47,9 +49,13 @@ export default function MoreScreen() {
                 <ListRow
                   icon={item.icon}
                   title={item.title}
-                  subtitle={item.subtitle}
                   trailingIcon={item.feature && !features.includes(item.feature) ? "lock-closed" : undefined}
-                  onPress={() => router.push({ pathname: "/soon", params: { title: item.title } })}
+                  subtitle={
+                    item.href === "/handovers" && pendingHandovers ? `${pendingHandovers} waiting for you` : item.subtitle
+                  }
+                  onPress={() =>
+                    item.href ? router.push(item.href) : router.push({ pathname: "/soon", params: { title: item.title } })
+                  }
                 />
               </View>
             ))}

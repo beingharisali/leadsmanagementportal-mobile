@@ -27,7 +27,15 @@
       "expo-secure-store",
       "expo-web-browser",
       "expo-font",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "GetCloseWise uses the camera so you can photograph documents and visiting cards and attach them to leads.",
+          "photosPermission": "GetCloseWise opens your photos so you can attach them to leads.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

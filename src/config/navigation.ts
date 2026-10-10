@@ -17,6 +17,8 @@ export interface MoreItem {
   feature?: PlanFeature;
   /** Heapware staff only */
   platformAdmin?: boolean;
+  /** The screen it opens; items without one show "coming soon" */
+  href?: "/pipeline" | "/handovers";
 }
 
 export interface MoreSection {
@@ -26,15 +28,21 @@ export interface MoreSection {
 
 /**
  * The "More" tab: everything that isn't one of the main tabs, mirroring the
- * website's sidebar (client/config/navigation.ts). Screens arrive in later updates.
+ * website's sidebar (client/config/navigation.ts). Items without an `href` arrive in later updates.
  */
 const MORE_SECTIONS: MoreSection[] = [
   {
     label: "Team",
     items: [
-      { title: "Pipeline", subtitle: "Leads by stage", icon: "git-branch-outline" },
+      { title: "Pipeline", subtitle: "Leads by stage", icon: "git-branch-outline", href: "/pipeline" },
       { title: "Team", subtitle: "Members and invitations", icon: "people-outline", roles: MANAGER_ROLES },
-      { title: "Handover requests", icon: "swap-horizontal-outline", roles: MANAGER_ROLES },
+      {
+        title: "Handover requests",
+        subtitle: "Agents asking to pass a lead on",
+        icon: "swap-horizontal-outline",
+        roles: MANAGER_ROLES,
+        href: "/handovers",
+      },
       { title: "Live status", icon: "radio-outline", roles: MANAGER_ROLES, feature: "monitoring" },
       { title: "Timesheets", icon: "time-outline", roles: MANAGER_ROLES, feature: "monitoring" },
       { title: "Performance", icon: "trophy-outline", roles: MANAGER_ROLES, feature: "monitoring" },

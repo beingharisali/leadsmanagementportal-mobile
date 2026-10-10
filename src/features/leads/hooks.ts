@@ -25,7 +25,7 @@ export const leadsApi = {
   setRating: (id: string, rating: LeadRating | null) => apiClient.put<Lead>(`/leads/${id}/rating`, { rating }),
   activities: (id: string) => apiClient.get<Activity[]>(`/leads/${id}/activities`),
   addNote: (id: string, message: string) => apiClient.post<Activity>(`/leads/${id}/notes`, { message }),
-  logMessage: (id: string, payload: { channel: "whatsapp" | "email"; body: string; subject?: string }) =>
+  logMessage: (id: string, payload: { channel: "whatsapp" | "email"; body: string; subject?: string; templateName?: string }) =>
     apiClient.post<Activity>(`/leads/${id}/messages`, payload),
   recordView: (id: string) => apiClient.post<null>(`/leads/${id}/views`),
 };
@@ -94,8 +94,36 @@ export function useAddNote(id: string) {
 export function useLogMessage(id: string) {
   const refresh = useRefreshLead();
   return useMutation({
-    mutationFn: (payload: { channel: "whatsapp" | "email"; body: string; subject?: string }) =>
+    mutationFn: (payload: { channel: "whatsapp" | "email"; body: string; subject?: string; templateName?: string }) =>
       leadsApi.logMessage(id, payload),
     onSuccess: () => refresh(),
   });
+}
+
+/** Managers: give the lead to someone, or `null` to put it back in the unassigned pool. */
+export function useAssignLead(id: string) {
+  const refresh = useRefreshLead();
+  return useMutation({
+    mutationFn: (assigneeId: string | null) =>
+      apiClient.post<{ updated: number; skipped: number; notFound: number }>("/leads/assign", {
+        leadIds: [id],
+        assigneeId,
+      }),
+    onSuccess: () => refresh(),
+  });
+}
+
+export interface LeadStats {
+  total: number;
+  openCount: number;
+  openBudget: number;
+  wonCount: number;
+  wonBudget: number;
+  winRate: number;
+  byStatus: { status: string; count: number; budget: number }[];
+}
+
+/** Counts and value per stage (agents: their own leads). */
+export function useLeadStats() {
+  return useQuery({ queryKey: [...leadKeys.all, "stats"], queryFn: () => apiClient.get<LeadStats>("/leads/stats") });
 }

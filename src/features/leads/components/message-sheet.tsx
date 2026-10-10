@@ -1,11 +1,15 @@
 import { useState } from "react";
-import { Alert, Linking } from "react-native";
+import { Alert, Linking, StyleSheet, View } from "react-native";
 
+import { AppText } from "@/components/ui/app-text";
 import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 import { Sheet, useOpenKey } from "@/components/ui/sheet";
 import { TextField } from "@/components/ui/text-field";
 import { useCurrentUser } from "@/features/auth/auth-provider";
+import { fillTemplate, templateValues, useTemplates, type MessageTemplate } from "@/features/templates/hooks";
 import { whatsappUrl } from "@/lib/format";
+import { spacing } from "@/theme/colors";
 
 import { useLogMessage } from "../hooks";
 import type { Lead } from "../types";
@@ -27,12 +31,21 @@ export function MessageSheet(props: MessageSheetProps) {
 function MessageSheetBody({ lead, channel, onClose }: MessageSheetProps) {
   const user = useCurrentUser();
   const logMessage = useLogMessage(lead.id);
+  const templates = useTemplates(channel);
+  const [templateName, setTemplateName] = useState<string | null>(null);
   const [subject, setSubject] = useState("");
   // A greeting and signature to type between.
   const [body, setBody] = useState(
     () =>
       `Assalam o Alaikum ${lead.name.split(" ")[0]},\n\n\n\nRegards,\n${user.name}${user.organization ? `\n${user.organization.name}` : ""}`,
   );
+
+  function applyTemplate(template: MessageTemplate) {
+    const values = templateValues(lead, user.name, user.organization?.name ?? "");
+    setBody(fillTemplate(template.body, values));
+    if (template.subject) setSubject(fillTemplate(template.subject, values));
+    setTemplateName(template.name);
+  }
 
   async function send() {
     if (!channel) return;
@@ -51,7 +64,12 @@ function MessageSheetBody({ lead, channel, onClose }: MessageSheetProps) {
       return;
     }
     // Best effort: the message is already on its way in the other app.
-    logMessage.mutate({ channel, body: text, ...(subject.trim() && { subject: subject.trim() }) });
+    logMessage.mutate({
+      channel,
+      body: text,
+      ...(subject.trim() && { subject: subject.trim() }),
+      ...(templateName && { templateName }),
+    });
     onClose();
   }
 
@@ -70,6 +88,21 @@ function MessageSheetBody({ lead, channel, onClose }: MessageSheetProps) {
         />
       }
     >
+      {(templates.data?.length ?? 0) > 0 && (
+        <View style={styles.templates}>
+          <AppText variant="label">Templates</AppText>
+          <View style={styles.chips}>
+            {templates.data!.map((template) => (
+              <Chip
+                key={template.id}
+                label={template.name}
+                selected={templateName === template.name}
+                onPress={() => applyTemplate(template)}
+              />
+            ))}
+          </View>
+        </View>
+      )}
       {channel === "email" && (
         <TextField label="Subject" value={subject} onChangeText={setSubject} maxLength={200} />
       )}
@@ -85,3 +118,8 @@ function MessageSheetBody({ lead, channel, onClose }: MessageSheetProps) {
     </Sheet>
   );
 }
+
+const styles = StyleSheet.create({
+  templates: { gap: spacing.sm },
+  chips: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+});
