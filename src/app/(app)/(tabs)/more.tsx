@@ -7,6 +7,7 @@ import { ListRow } from "@/components/ui/list-row";
 import { Screen } from "@/components/ui/screen";
 import { moreSectionsFor } from "@/config/navigation";
 import { useAuth, useCurrentUser } from "@/features/auth/auth-provider";
+import { useSupportSwitch } from "@/features/platform/support-switch";
 import { usePendingReassignmentCount } from "@/features/reassignments/hooks";
 import { isManagerRole, userRoleLabels } from "@/features/users/types";
 import { APP_VERSION } from "@/lib/config";
@@ -16,6 +17,7 @@ import { useTheme } from "@/theme/use-theme";
 export default function MoreScreen() {
   const user = useCurrentUser();
   const { signOut } = useAuth();
+  const support = useSupportSwitch();
   const { colors } = useTheme();
   const features = user.organization?.features ?? [];
   const pendingHandovers = usePendingReassignmentCount(isManagerRole(user.role)).data ?? 0;
@@ -23,7 +25,8 @@ export default function MoreScreen() {
   function confirmSignOut() {
     Alert.alert("Sign out?", "You'll need your email and password to sign in again.", [
       { text: "Cancel", style: "cancel" },
-      { text: "Sign out", style: "destructive", onPress: () => void signOut() },
+      // In a support session, signing out ends it and goes back to the staff account.
+      { text: "Sign out", style: "destructive", onPress: () => void (user.support ? support.exit() : signOut()) },
     ]);
   }
 

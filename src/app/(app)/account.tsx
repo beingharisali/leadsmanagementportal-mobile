@@ -9,6 +9,7 @@ import { Screen } from "@/components/ui/screen";
 import { TextField } from "@/components/ui/text-field";
 import { useChangePassword, useUpdateProfile } from "@/features/account/hooks";
 import { useAuth, useCurrentUser } from "@/features/auth/auth-provider";
+import { useSupportSwitch } from "@/features/platform/support-switch";
 import { NotificationSettingsCard } from "@/features/push/notification-settings";
 import { passwordProblem, userRoleLabels } from "@/features/users/types";
 import { ApiClientError, fieldError, getErrorMessage } from "@/lib/api-client";
@@ -21,6 +22,7 @@ import { useTheme } from "@/theme/use-theme";
 export default function AccountScreen() {
   const user = useCurrentUser();
   const { signOut } = useAuth();
+  const support = useSupportSwitch();
   const { colors } = useTheme();
   const viewingAs = useViewAsTarget();
   const [signingOut, setSigningOut] = useState(false);
@@ -51,7 +53,8 @@ export default function AccountScreen() {
         loading={signingOut}
         onPress={() => {
           setSigningOut(true);
-          void signOut();
+          // In a support session, signing out ends it and goes back to the staff account.
+          void (user.support ? support.exit() : signOut());
         }}
       />
     </Screen>

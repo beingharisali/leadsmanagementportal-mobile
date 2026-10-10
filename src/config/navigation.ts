@@ -131,10 +131,20 @@ const MORE_SECTIONS: MoreSection[] = [
   {
     label: "Heapware platform",
     items: [
-      { title: "Companies", icon: "business-outline", platformAdmin: true },
-      { title: "Announcements", icon: "megaphone-outline", platformAdmin: true },
-      { title: "Plans", icon: "diamond-outline", platformAdmin: true },
-      { title: "Payments & invoices", icon: "receipt-outline", platformAdmin: true },
+      { title: "Overview", subtitle: "Every company at a glance", icon: "speedometer-outline", platformAdmin: true, href: "/console" },
+      { title: "Companies", subtitle: "Manage, suspend, invoice", icon: "business-outline", platformAdmin: true, href: "/console/companies" },
+      { title: "Announcements", icon: "megaphone-outline", platformAdmin: true, href: "/console/announcements" },
+      { title: "Support log", subtitle: "Support sign-ins", icon: "help-buoy-outline", platformAdmin: true, href: "/console/support" },
+      { title: "Plans", subtitle: "Limits and features", icon: "diamond-outline", platformAdmin: true, href: "/console/plans" },
+      { title: "Payments", subtitle: "Receipts to review", icon: "card-outline", platformAdmin: true, href: "/console/payments" },
+      { title: "Invoices", icon: "document-text-outline", platformAdmin: true, href: "/console/invoices" },
+      {
+        title: "Billing settings",
+        subtitle: "Prices, reminders, payment accounts",
+        icon: "wallet-outline",
+        platformAdmin: true,
+        href: "/console/billing-settings",
+      },
     ],
   },
 ];

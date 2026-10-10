@@ -1,5 +1,4 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Alert, Pressable, StyleSheet, View } from "react-native";
 
@@ -8,10 +7,10 @@ import { Button } from "@/components/ui/button";
 import { useDismissAnnouncement, useMyAnnouncements, type AnnouncementLevel } from "@/features/announcements/hooks";
 import { useAuth, useCurrentUser } from "@/features/auth/auth-provider";
 import { useDeleteSampleData } from "@/features/onboarding/hooks";
+import { useSupportSwitch } from "@/features/platform/support-switch";
 import { isManagerRole } from "@/features/users/types";
-import { apiClient, getErrorMessage } from "@/lib/api-client";
+import { getErrorMessage } from "@/lib/api-client";
 import { formatDateTime } from "@/lib/format";
-import { authKeys } from "@/lib/query-client";
 import { radius, spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
 
@@ -22,21 +21,18 @@ import { useResendVerification } from "./hooks";
  * that it's read-only, until when, and a way out. Shown on every screen.
  */
 export function SupportBanner() {
-  const { user, signOut } = useAuth();
-  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const support = useSupportSwitch();
   const [exiting, setExiting] = useState(false);
   if (!user?.support) return null;
 
   async function exit() {
     setExiting(true);
-    const result = await apiClient
-      .post<{ restored: boolean }>("/auth/support/exit")
-      .catch(() => ({ restored: false }));
-    if (!result.restored) return void signOut();
-    // Back as the staff account: nothing from the customer's workspace stays cached.
-    queryClient.clear();
-    await queryClient.refetchQueries({ queryKey: authKeys.me });
-    setExiting(false);
+    try {
+      await support.exit();
+    } finally {
+      setExiting(false);
+    }
   }
 
   return (

@@ -48,6 +48,16 @@ export default function AppLayout() {
         <Stack.Screen name="settings/templates/edit" options={{ title: "Template" }} />
         <Stack.Screen name="settings/plan" options={{ title: "Plan & usage" }} />
         <Stack.Screen name="settings/billing" options={{ title: "Billing" }} />
+        <Stack.Screen name="console/index" options={{ title: "Console" }} />
+        <Stack.Screen name="console/companies/index" options={{ title: "Companies" }} />
+        <Stack.Screen name="console/companies/new" options={{ title: "Add company" }} />
+        <Stack.Screen name="console/companies/[id]" options={{ title: "" }} />
+        <Stack.Screen name="console/announcements" options={{ title: "Announcements" }} />
+        <Stack.Screen name="console/support" options={{ title: "Support log" }} />
+        <Stack.Screen name="console/plans" options={{ title: "Plans" }} />
+        <Stack.Screen name="console/payments" options={{ title: "Payments" }} />
+        <Stack.Screen name="console/invoices" options={{ title: "Invoices" }} />
+        <Stack.Screen name="console/billing-settings" options={{ title: "Billing settings" }} />
       </Stack>
     </View>
   );
