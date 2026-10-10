@@ -12,8 +12,8 @@ interface DateTimeFieldProps {
   /** `null`: nothing picked yet (date-only fields) */
   value: Date | null;
   onChange: (value: Date) => void;
-  /** "datetime": a day and a time; "date": a calendar day only */
-  mode?: "datetime" | "date";
+  /** "datetime": a day and a time; "date": a calendar day only; "time": a time of day only */
+  mode?: "datetime" | "date" | "time";
   minimumDate?: Date;
   error?: string;
 }
@@ -59,21 +59,23 @@ export function DateTimeField({ label, value, onChange, mode = "datetime", minim
       <AppText variant="label">{label}</AppText>
       {Platform.OS === "android" ? (
         <View style={styles.row}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`${label}: pick a day`}
-            onPress={() => openAndroid("date")}
-            style={[box, styles.flex]}
-          >
-            <Ionicons name="calendar-outline" size={18} color={colors.mutedText} />
-            <AppText muted={!value}>{value ? formatDay(value) : "Pick a day"}</AppText>
-          </Pressable>
-          {mode === "datetime" && (
+          {mode !== "time" && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${label}: pick a day`}
+              onPress={() => openAndroid("date")}
+              style={[box, styles.flex]}
+            >
+              <Ionicons name="calendar-outline" size={18} color={colors.mutedText} />
+              <AppText muted={!value}>{value ? formatDay(value) : "Pick a day"}</AppText>
+            </Pressable>
+          )}
+          {mode !== "date" && (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`${label}: pick a time`}
               onPress={() => openAndroid("time")}
-              style={box}
+              style={mode === "time" ? [box, styles.flex] : box}
             >
               <Ionicons name="time-outline" size={18} color={colors.mutedText} />
               <AppText>{formatClock(current)}</AppText>

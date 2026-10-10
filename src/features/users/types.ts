@@ -32,7 +32,31 @@ export interface User {
   support?: { sessionId: string; staffName: string; startedAt: string; expiresAt: string };
   /** Only on the signed-in user (`/auth/me`) */
   organization?: OrganizationSummary;
+  /** Their own working hours instead of the company's shift */
+  shift?: UserShift | null;
   lastLoginAt?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Roles an owner or admin can give (the owner role is never handed out in the app). */
+export const ASSIGNABLE_ROLES = ["admin", "agent"] as const satisfies readonly UserRole[];
+export type AssignableRole = (typeof ASSIGNABLE_ROLES)[number];
+
+export interface UserShift {
+  /** "HH:MM" */
+  start: string;
+  end: string;
+  /** 0 = Sunday … 6 = Saturday */
+  workDays: number[];
+}
+
+export const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+
+/** Same rule as the API (server/src/modules/auth/password.ts); `null` when fine. */
+export function passwordProblem(password: string) {
+  if (password.length < 8) return "At least 8 characters";
+  if (!/[A-Za-z]/.test(password)) return "Must contain a letter";
+  if (!/\d/.test(password)) return "Must contain a number";
+  return null;
 }

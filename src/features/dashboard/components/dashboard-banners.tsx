@@ -1,4 +1,5 @@
 import { router } from "expo-router";
+import { useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/ui/app-text";
@@ -10,6 +11,7 @@ import { useLeadOptions } from "@/features/customization/hooks";
 import { useLeads } from "@/features/leads/hooks";
 import { useCanLoadSampleData, useLoadSampleData } from "@/features/onboarding/hooks";
 import { useCanEdit } from "@/features/organizations/hooks";
+import { InviteSheet } from "@/features/team/components/invite-sheet";
 import { getErrorMessage } from "@/lib/api-client";
 import { linkParams } from "@/lib/link-params";
 import { spacing } from "@/theme/colors";
@@ -32,6 +34,9 @@ export function GettingStartedCard() {
   const canEdit = useCanEdit();
   const canLoadSamples = useCanLoadSampleData();
   const load = useLoadSampleData();
+  const user = useCurrentUser();
+  const hasImport = user.organization?.features.includes("import") ?? false;
+  const [inviting, setInviting] = useState(false);
 
   function loadSamples() {
     load.mutate(undefined, {
@@ -45,12 +50,15 @@ export function GettingStartedCard() {
     <Card>
       <AppText variant="heading">Let&apos;s get your first leads in</AppText>
       <AppText muted>
-        Your workspace is empty. Add leads yourself or load sample data to see how the dashboard, pipeline and
-        follow-ups work. Spreadsheet import and inviting agents are on the website.
+        Your workspace is empty. Add leads yourself, import a spreadsheet, or load sample data to see how the
+        dashboard, pipeline and follow-ups work. Then invite your agents.
       </AppText>
       {canEdit && (
         <View style={styles.buttons}>
           <Button title="Add a lead" icon="add" onPress={() => router.push("/leads/new")} />
+          {hasImport && (
+            <Button title="Import from Excel" variant="secondary" icon="cloud-upload-outline" onPress={() => router.push("/leads/import")} />
+          )}
           {canLoadSamples && (
             <Button
               title="Load sample data"
@@ -60,8 +68,10 @@ export function GettingStartedCard() {
               onPress={loadSamples}
             />
           )}
+          <Button title="Invite agents" variant="secondary" icon="mail-outline" onPress={() => setInviting(true)} />
         </View>
       )}
+      <InviteSheet open={inviting} onClose={() => setInviting(false)} />
     </Card>
   );
 }

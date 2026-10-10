@@ -18,7 +18,7 @@ export interface MoreItem {
   /** Heapware staff only */
   platformAdmin?: boolean;
   /** The screen it opens; items without one show "coming soon" */
-  href?: "/pipeline" | "/handovers" | "/recycle-bin" | "/leads/import";
+  href?: "/pipeline" | "/handovers" | "/recycle-bin" | "/leads/import" | "/team" | "/activity";
 }
 
 export interface MoreSection {
@@ -35,7 +35,7 @@ const MORE_SECTIONS: MoreSection[] = [
     label: "Team",
     items: [
       { title: "Pipeline", subtitle: "Leads by stage", icon: "git-branch-outline", href: "/pipeline" },
-      { title: "Team", subtitle: "Members and invitations", icon: "people-outline", roles: MANAGER_ROLES },
+      { title: "Team", subtitle: "Members and invitations", icon: "people-outline", roles: MANAGER_ROLES, href: "/team" },
       {
         title: "Handover requests",
         subtitle: "Agents asking to pass a lead on",
@@ -46,7 +46,14 @@ const MORE_SECTIONS: MoreSection[] = [
       { title: "Live status", icon: "radio-outline", roles: MANAGER_ROLES, feature: "monitoring" },
       { title: "Timesheets", icon: "time-outline", roles: MANAGER_ROLES, feature: "monitoring" },
       { title: "Performance", icon: "trophy-outline", roles: MANAGER_ROLES, feature: "monitoring" },
-      { title: "Activity feed", icon: "pulse-outline", roles: MANAGER_ROLES, feature: "auditLog" },
+      {
+        title: "Activity feed",
+        subtitle: "Every change and sign-in",
+        icon: "pulse-outline",
+        roles: MANAGER_ROLES,
+        feature: "auditLog",
+        href: "/activity",
+      },
       {
         title: "Import leads",
         subtitle: "From an Excel or CSV file",

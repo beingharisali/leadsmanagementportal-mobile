@@ -23,6 +23,10 @@ export default function AppLayout() {
         <Stack.Screen name="pipeline" options={{ title: "Pipeline" }} />
         <Stack.Screen name="handovers" options={{ title: "Handover requests" }} />
         <Stack.Screen name="recycle-bin" options={{ title: "Recycle bin" }} />
+        <Stack.Screen name="team/index" options={{ title: "Team" }} />
+        <Stack.Screen name="team/new" options={{ title: "Add member" }} />
+        <Stack.Screen name="team/[id]" options={{ title: "Edit member" }} />
+        <Stack.Screen name="activity" options={{ title: "Activity feed" }} />
       </Stack>
     </View>
   );
