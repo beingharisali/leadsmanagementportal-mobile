@@ -27,6 +27,10 @@ export default function AppLayout() {
         <Stack.Screen name="team/new" options={{ title: "Add member" }} />
         <Stack.Screen name="team/[id]" options={{ title: "Edit member" }} />
         <Stack.Screen name="activity" options={{ title: "Activity feed" }} />
+        <Stack.Screen name="monitoring/index" options={{ title: "Live status" }} />
+        <Stack.Screen name="monitoring/[userId]" options={{ title: "" }} />
+        <Stack.Screen name="timesheets" options={{ title: "Timesheets" }} />
+        <Stack.Screen name="performance" options={{ title: "Performance" }} />
       </Stack>
     </View>
   );

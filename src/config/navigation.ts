@@ -18,7 +18,16 @@ export interface MoreItem {
   /** Heapware staff only */
   platformAdmin?: boolean;
   /** The screen it opens; items without one show "coming soon" */
-  href?: "/pipeline" | "/handovers" | "/recycle-bin" | "/leads/import" | "/team" | "/activity";
+  href?:
+    | "/pipeline"
+    | "/handovers"
+    | "/recycle-bin"
+    | "/leads/import"
+    | "/team"
+    | "/activity"
+    | "/monitoring"
+    | "/timesheets"
+    | "/performance";
 }
 
 export interface MoreSection {
@@ -43,9 +52,30 @@ const MORE_SECTIONS: MoreSection[] = [
         roles: MANAGER_ROLES,
         href: "/handovers",
       },
-      { title: "Live status", icon: "radio-outline", roles: MANAGER_ROLES, feature: "monitoring" },
-      { title: "Timesheets", icon: "time-outline", roles: MANAGER_ROLES, feature: "monitoring" },
-      { title: "Performance", icon: "trophy-outline", roles: MANAGER_ROLES, feature: "monitoring" },
+      {
+        title: "Live status",
+        subtitle: "Who's online and on which lead",
+        icon: "radio-outline",
+        roles: MANAGER_ROLES,
+        feature: "monitoring",
+        href: "/monitoring",
+      },
+      {
+        title: "Timesheets",
+        subtitle: "Daily hours and attendance",
+        icon: "time-outline",
+        roles: MANAGER_ROLES,
+        feature: "monitoring",
+        href: "/timesheets",
+      },
+      {
+        title: "Performance",
+        subtitle: "Agent report and targets",
+        icon: "trophy-outline",
+        roles: MANAGER_ROLES,
+        feature: "monitoring",
+        href: "/performance",
+      },
       {
         title: "Activity feed",
         subtitle: "Every change and sign-in",

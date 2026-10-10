@@ -1,6 +1,7 @@
 import type { ApiErrorDetail, ApiResponse, PaginationMeta } from "@/types/api";
 
 import { API_URL, USER_AGENT } from "./config";
+import { getViewAs } from "./view-as";
 
 export class ApiClientError extends Error {
   constructor(
@@ -24,6 +25,8 @@ interface RequestOptions {
   params?: QueryParams;
   /** Give up after this long. The free Render plan can take ~a minute to wake up. */
   timeoutMs?: number;
+  /** As the signed-in user even while viewing as an agent (heartbeats, signing out) */
+  asSelf?: boolean;
 }
 
 /**
@@ -62,8 +65,13 @@ function toQueryString(params?: QueryParams) {
  * Signs requests with `Authorization: Bearer`, unwraps the
  * `{ success, message, data }` envelope and throws `ApiClientError` on failure.
  */
-async function request<T>(path: string, { method, body, params, timeoutMs = 60_000 }: RequestOptions) {
+async function request<T>(path: string, { method, body, params, timeoutMs = 60_000, asSelf }: RequestOptions) {
   const sentToken = authToken;
+  // Viewing as an agent is read-only: the API refuses changes, so don't even send them.
+  const viewAs = asSelf ? null : getViewAs();
+  if (viewAs && method !== "GET") {
+    throw new ApiClientError(`You're viewing as ${viewAs.name} (read-only). Exit view mode to make changes.`, 403);
+  }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -76,6 +84,7 @@ async function request<T>(path: string, { method, body, params, timeoutMs = 60_0
         "Content-Type": "application/json",
         "User-Agent": USER_AGENT,
         ...(sentToken && { Authorization: `Bearer ${sentToken}` }),
+        ...(viewAs && { "X-View-As": viewAs.id }),
       },
       body: body === undefined ? undefined : JSON.stringify(body),
       signal: controller.signal,
@@ -159,7 +168,7 @@ export const apiClient = {
     const payload = await request<T[]>(path, { method: "GET", params });
     return { items: payload.data, meta: payload.meta! };
   },
-  async post<T>(path: string, body?: unknown, options?: { timeoutMs?: number }) {
+  async post<T>(path: string, body?: unknown, options?: { timeoutMs?: number; asSelf?: boolean }) {
     return (await request<T>(path, { method: "POST", body, ...options })).data;
   },
   async put<T>(path: string, body?: unknown) {

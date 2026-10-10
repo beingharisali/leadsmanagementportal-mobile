@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView, type Edge } from "react-native-safe-area-context";
 
-import { OfflineBanner } from "@/components/offline-banner";
+import { ScreenNotices } from "@/components/screen-notices";
 import { spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
 
@@ -41,7 +41,7 @@ export function Screen({ children, onRefresh, edges = ["left", "right"] }: Scree
             ) : undefined
           }
         >
-          <OfflineBanner />
+          <ScreenNotices />
           {children}
         </ScrollView>
       </KeyboardAvoidingView>

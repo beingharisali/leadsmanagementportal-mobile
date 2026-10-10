@@ -17,6 +17,7 @@ import { InviteSheet } from "@/features/team/components/invite-sheet";
 import { OffboardSheet } from "@/features/team/components/offboard-sheet";
 import { PendingInvitations } from "@/features/team/components/pending-invitations";
 import { ShiftSheet } from "@/features/team/components/shift-sheet";
+import { useViewAsControls } from "@/features/tracking/view-as";
 import { useUpdateUser, useUsers, type UserListParams } from "@/features/users/hooks";
 import { userRoleLabels, type User } from "@/features/users/types";
 import { getErrorMessage } from "@/lib/api-client";
@@ -48,6 +49,8 @@ export default function TeamScreen() {
   const debouncedSearch = useDebouncedValue(search.trim());
   const users = useUsers({ search: debouncedSearch || undefined, role, status });
   const update = useUpdateUser();
+  const viewAs = useViewAsControls();
+  const hasMonitoring = me.organization?.features.includes("monitoring") ?? false;
 
   const [inviting, setInviting] = useState(false);
   const [actionsFor, setActionsFor] = useState<User | null>(null);
@@ -84,14 +87,14 @@ export default function TeamScreen() {
 
   const renderItem = useCallback(
     ({ item }: { item: User }) => (
-      <MemberRow user={item} isMe={item.id === me.id} onPress={canEdit ? () => setActionsFor(item) : undefined} />
+      <MemberRow user={item} isMe={item.id === me.id} onPress={() => setActionsFor(item)} />
     ),
-    [me.id, canEdit],
+    [me.id],
   );
 
   const target = actionsFor;
   // Only the owner edits the owner's account.
-  const canManage = (u: User) => u.role !== "owner" || u.id === me.id;
+  const canManage = (u: User) => canEdit && (u.role !== "owner" || u.id === me.id);
   const filtered = !!debouncedSearch || !!role || !!status;
 
   return (
@@ -155,10 +158,28 @@ export default function TeamScreen() {
                 onPress={() => then(() => router.push({ pathname: "/team/[id]", params: { id: target.id } }))}
               />
             )}
+            {hasMonitoring && (
+              <ListRow
+                icon="pulse-outline"
+                title="View activity"
+                subtitle="Their day, timesheet and sign-ins"
+                onPress={() =>
+                  then(() => router.push({ pathname: "/monitoring/[userId]", params: { userId: target.id } }))
+                }
+              />
+            )}
+            {hasMonitoring && target.role === "agent" && target.isActive && (
+              <ListRow
+                icon="eye-outline"
+                title="View as agent"
+                subtitle="See the app exactly as they do (read-only)"
+                onPress={() => then(() => void viewAs.start({ id: target.id, name: target.name }))}
+              />
+            )}
             {target.isActive && canManage(target) && (
               <ListRow icon="time-outline" title="Working hours" onPress={() => then(() => setShiftFor(target))} />
             )}
-            {target.isActive && target.id !== me.id && target.role !== "owner" && (
+            {canEdit && target.isActive && target.id !== me.id && target.role !== "owner" && (
               <ListRow
                 icon="exit-outline"
                 title="Offboard…"
@@ -166,7 +187,7 @@ export default function TeamScreen() {
                 onPress={() => then(() => setOffboarding(target))}
               />
             )}
-            {target.id !== me.id && target.role !== "owner" && (
+            {canEdit && target.id !== me.id && target.role !== "owner" && (
               <ListRow
                 icon={target.isActive ? "person-remove-outline" : "person-add-outline"}
                 title={target.isActive ? "Deactivate" : "Activate"}

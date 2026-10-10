@@ -23,6 +23,6 @@ export const authApi = {
   demoSignIn: (role: "admin" | "agent") => apiClient.post<SignInResult>("/demo/sign-in", { role }),
   /** `idle_timeout`: the app signed out on its own after the company's inactivity limit */
   logout: (reason: "logout" | "idle_timeout" = "logout") =>
-    apiClient.post<null>("/auth/logout", { reason }, { timeoutMs: 10_000 }),
+    apiClient.post<null>("/auth/logout", { reason }, { timeoutMs: 10_000, asSelf: true }),
   forgotPassword: (payload: { email: string }) => apiClient.post<null>("/auth/forgot-password", payload),
 };

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth, useCurrentUser } from "@/features/auth/auth-provider";
 import { useLeadOptions } from "@/features/customization/hooks";
 import { apiClient } from "@/lib/api-client";
+import { getViewAs } from "@/lib/view-as";
 import { radius, spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
 
@@ -60,7 +61,8 @@ function Tracker() {
 
   // The lead on screen is the one being worked on; reported as soon as it changes.
   useEffect(() => {
-    leadId.current = LEAD_PATH.exec(pathname)?.[1] ?? null;
+    // Not counted against a lead while viewing as an agent.
+    leadId.current = getViewAs() ? null : (LEAD_PATH.exec(pathname)?.[1] ?? null);
     tickRef.current();
   }, [pathname]);
 
@@ -73,13 +75,18 @@ function Tracker() {
     const send = (state = currentState()) => {
       lastSent.current = { state, leadId: leadId.current, at: Date.now() };
       // A 401 (session ended elsewhere) signs out through the API client's handler.
+      // Always for the signed-in manager, even while viewing as an agent.
       apiClient
-        .post("/tracking/heartbeat", {
-          tabId: APP_RUN_ID,
-          state,
-          leadId: state === "away" ? null : leadId.current,
-          lastInputAt: new Date(getLastInputAt()).toISOString(),
-        })
+        .post(
+          "/tracking/heartbeat",
+          {
+            tabId: APP_RUN_ID,
+            state,
+            leadId: state === "away" ? null : leadId.current,
+            lastInputAt: new Date(getLastInputAt()).toISOString(),
+          },
+          { asSelf: true },
+        )
         .catch(() => undefined);
     };
 

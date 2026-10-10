@@ -16,12 +16,12 @@ function format(metric: TargetMetric, value: number) {
 }
 
 /** Metrics with a target set (0 = none). */
-function withTarget(progress: TargetProgress) {
+export function withTarget(progress: TargetProgress) {
   return TARGET_METRICS.filter((metric) => progress[metric].target > 0);
 }
 
 /** "October 2026" from "2026-10". */
-function monthName(month: string) {
+export function monthName(month: string) {
   const [y, m] = month.split("-").map(Number);
   return new Date(y!, (m ?? 1) - 1, 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
 }
@@ -44,7 +44,7 @@ export function MyTargetsCard() {
   );
 }
 
-function Period({ title, progress, metrics }: { title: string; progress: TargetProgress; metrics: TargetMetric[] }) {
+export function Period({ title, progress, metrics }: { title: string; progress: TargetProgress; metrics: TargetMetric[] }) {
   const { colors } = useTheme();
   return (
     <View style={styles.period}>

@@ -2,7 +2,7 @@ import { useState, type ReactElement } from "react";
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View, type ListRenderItem } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { OfflineBanner } from "@/components/offline-banner";
+import { ScreenNotices } from "@/components/screen-notices";
 import { spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
 
@@ -67,7 +67,7 @@ export function InfiniteList<T>({
         keyboardDismissMode="on-drag"
         ListHeaderComponent={
           <View style={styles.header}>
-            <OfflineBanner />
+            <ScreenNotices />
             {header}
           </View>
         }

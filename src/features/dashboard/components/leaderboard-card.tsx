@@ -10,6 +10,7 @@ import { useCurrentUser } from "@/features/auth/auth-provider";
 import {
   LEADERBOARD_PERIODS,
   leaderboardPeriodLabels,
+  scoreColor,
   useLeaderboard,
   type LeaderboardPeriod,
 } from "@/features/performance/hooks";
@@ -21,13 +22,6 @@ import { CardHeader } from "./card-header";
 /** Gold, silver, bronze for the top three. */
 const MEDALS = ["#F59E0B", "#9CA3AF", "#C2410C"];
 const SHOWN = 8;
-
-/** Same bands as the website's score badge (client/features/performance/components/score-badge.tsx). */
-function scoreColor(score: number) {
-  if (score >= 75) return "emerald" as const;
-  if (score >= 50) return "amber" as const;
-  return "rose" as const;
-}
 
 /** The team ranked by productivity score; on plans with team monitoring. */
 export function LeaderboardCard() {

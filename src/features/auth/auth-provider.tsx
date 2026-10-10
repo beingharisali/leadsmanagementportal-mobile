@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { ApiClientError, setAuthToken, setUnauthorizedHandler } from "@/lib/api-client";
 import { authKeys, queryClient } from "@/lib/query-client";
 import { tokenStorage } from "@/lib/token-storage";
+import { setViewAs } from "@/lib/view-as";
 import type { User } from "@/features/users/types";
 
 import { authApi } from "./api";
@@ -39,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const forget = useCallback(async (reason: string | null) => {
+    setViewAs(null);
     setAuthToken(null);
     await tokenStorage.clear();
     queryClient.clear();
