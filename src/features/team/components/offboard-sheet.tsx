@@ -17,6 +17,8 @@ const plural = (count: number, word: string) => `${count} ${word}${count === 1 ?
 interface OffboardSheetProps {
   user: User | null;
   onClose: () => void;
+  /** Delete the account for good after the handover (frees the email). */
+  remove?: boolean;
 }
 
 export function OffboardSheet(props: OffboardSheetProps) {
@@ -26,8 +28,9 @@ export function OffboardSheet(props: OffboardSheetProps) {
 /**
  * One step when someone leaves: their open leads and follow-ups go to a
  * teammate (or the unassigned pool) and their account is deactivated at once.
+ * With `remove`, the account is then deleted for good.
  */
-function OffboardSheetBody({ user, onClose }: OffboardSheetProps) {
+function OffboardSheetBody({ user, onClose, remove = false }: OffboardSheetProps) {
   const { colors } = useTheme();
   const preview = useOffboardingPreview(user?.id);
   const users = useAssignableUsers(!!user);
@@ -39,19 +42,19 @@ function OffboardSheetBody({ user, onClose }: OffboardSheetProps) {
   function confirm() {
     if (!user) return;
     offboard.mutate(
-      { id: user.id, reassignTo: target === POOL ? null : target },
+      { id: user.id, reassignTo: target === POOL ? null : target, remove },
       {
         onSuccess: (result) => {
           onClose();
           const to = target === POOL ? "the unassigned pool" : others.find((u) => u.id === target)?.name;
           Alert.alert(
-            `${user.name} has been offboarded`,
+            `${user.name} has been ${remove ? "deleted" : "offboarded"}`,
             result.leadsMoved > 0
               ? `${plural(result.leadsMoved, "open lead")} and ${plural(result.followUpsMoved, "follow-up")} moved to ${to}.`
               : "They had no open leads.",
           );
         },
-        onError: (error) => Alert.alert("Couldn't offboard them", getErrorMessage(error)),
+        onError: (error) => Alert.alert(remove ? "Couldn't delete them" : "Couldn't offboard them", getErrorMessage(error)),
       },
     );
   }
@@ -60,10 +63,20 @@ function OffboardSheetBody({ user, onClose }: OffboardSheetProps) {
     <Sheet
       open={!!user}
       onClose={onClose}
-      title={`Offboard ${user?.name ?? ""}?`}
-      subtitle="They're signed out everywhere right away and can't sign in again. Won and lost leads stay in their name. You can reactivate them later."
+      title={remove ? `Delete ${user?.name ?? ""} permanently?` : `Offboard ${user?.name ?? ""}?`}
+      subtitle={
+        remove
+          ? `They're signed out everywhere and removed from your team for good. This can't be undone. Their email (${user?.email ?? ""}) is freed so you can add a new account with it. Past history keeps their name.`
+          : "They're signed out everywhere right away and can't sign in again. Won and lost leads stay in their name. You can reactivate them later."
+      }
       footer={
-        <Button title="Offboard" variant="danger" loading={offboard.isPending} disabled={preview.isPending} onPress={confirm} />
+        <Button
+          title={remove ? "Delete permanently" : "Offboard"}
+          variant="danger"
+          loading={offboard.isPending}
+          disabled={preview.isPending}
+          onPress={confirm}
+        />
       }
     >
       <View style={[styles.summary, { backgroundColor: colors.background, borderColor: colors.border }]}>

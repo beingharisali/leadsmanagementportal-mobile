@@ -119,6 +119,23 @@ export function useUpdateOrganization() {
   });
 }
 
+/**
+ * Deletes a company and all its data for good; `confirmName` must match its name.
+ * Refreshes everything except the deleted company's own page, which the caller leaves.
+ */
+export function useDeleteOrganization() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, confirmName }: { id: string; confirmName: string }) =>
+      apiClient.post<{ id: string; name: string }>(`/platform/organizations/${id}/delete`, { confirmName }),
+    onSuccess: (_result, { id }) =>
+      void queryClient.invalidateQueries({
+        queryKey: platformKeys.all,
+        predicate: (query) => !(query.queryKey[1] === "organization" && query.queryKey[2] === id),
+      }),
+  });
+}
+
 /** Rebuilds the public demo now (it also resets itself every night). */
 export function useResetDemo() {
   const refresh = useRefreshPlatform();

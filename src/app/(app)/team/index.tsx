@@ -56,6 +56,7 @@ export default function TeamScreen() {
   const [actionsFor, setActionsFor] = useState<User | null>(null);
   const [shiftFor, setShiftFor] = useState<User | null>(null);
   const [offboarding, setOffboarding] = useState<User | null>(null);
+  const [deleting, setDeleting] = useState<User | null>(null);
 
   function toggleActive(user: User) {
     const activate = !user.isActive;
@@ -195,12 +196,22 @@ export default function TeamScreen() {
                 onPress={() => then(() => toggleActive(target))}
               />
             )}
+            {canEdit && target.id !== me.id && target.role !== "owner" && (
+              <ListRow
+                icon="trash-outline"
+                title="Delete permanently…"
+                subtitle="Remove them for good and free their email"
+                destructive
+                onPress={() => then(() => setDeleting(target))}
+              />
+            )}
           </View>
         )}
       </Sheet>
       <InviteSheet open={inviting} onClose={() => setInviting(false)} />
       <ShiftSheet user={shiftFor} onClose={() => setShiftFor(null)} />
       <OffboardSheet user={offboarding} onClose={() => setOffboarding(null)} />
+      <OffboardSheet user={deleting} remove onClose={() => setDeleting(null)} />
     </>
   );
 }

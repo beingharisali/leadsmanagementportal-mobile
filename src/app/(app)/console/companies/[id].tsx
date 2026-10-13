@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 
@@ -14,6 +14,7 @@ import { TextField } from "@/components/ui/text-field";
 import { useCurrentUser } from "@/features/auth/auth-provider";
 import type { BillingStatus } from "@/features/organizations/types";
 import { OrganizationStatusBadge } from "@/features/platform/components/company-row";
+import { DeleteCompanySheet } from "@/features/platform/components/delete-company-sheet";
 import { InvoiceSheet } from "@/features/platform/components/invoice-sheet";
 import { OptionalDateField } from "@/features/platform/components/optional-date-field";
 import { SupportSheet } from "@/features/platform/components/support-sheet";
@@ -68,7 +69,7 @@ function ManageCompany({ organization, onRefresh }: { organization: PlatformOrga
   const [trialEnds, setTrialEnds] = useState<Date | null>(organization.trialEndsAt ? new Date(organization.trialEndsAt) : null);
   const [paidUntil, setPaidUntil] = useState<Date | null>(organization.paidUntil ? new Date(organization.paidUntil) : null);
   const [nameError, setNameError] = useState<string>();
-  const [sheet, setSheet] = useState<"invoice" | "support" | null>(null);
+  const [sheet, setSheet] = useState<"invoice" | "support" | "delete" | null>(null);
 
   function save() {
     if (name.trim().length < 2) return setNameError("Company name is required");
@@ -254,11 +255,22 @@ function ManageCompany({ organization, onRefresh }: { organization: PlatformOrga
             loading={update.isPending && !!update.variables?.payload.status}
             onPress={toggleStatus}
           />
+          {!organization.isDemo && (
+            <Button title="Delete company" variant="ghost" icon="trash-outline" onPress={() => setSheet("delete")} />
+          )}
         </Card>
       )}
 
       <InvoiceSheet organization={organization} open={sheet === "invoice"} onClose={() => setSheet(null)} />
       <SupportSheet organization={organization} open={sheet === "support"} onClose={() => setSheet(null)} />
+      {!isOwn && !organization.isDemo && (
+        <DeleteCompanySheet
+          organization={organization}
+          open={sheet === "delete"}
+          onClose={() => setSheet(null)}
+          onDeleted={() => router.back()}
+        />
+      )}
     </Screen>
   );
 }

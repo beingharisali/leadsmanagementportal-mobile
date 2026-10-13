@@ -118,12 +118,15 @@ export function useOffboardingPreview(id: string | undefined) {
   });
 }
 
-/** Hands the leaver's open leads and follow-ups over, then deactivates them. */
+/**
+ * Hands the leaver's open leads and follow-ups over, then deactivates them.
+ * With `remove`, the account is then deleted for good and its email freed.
+ */
 export function useOffboardUser() {
   const refresh = useRefreshTeam();
   return useMutation({
-    mutationFn: ({ id, reassignTo }: { id: string; reassignTo: string | null }) =>
-      apiClient.post<OffboardingResult>(`/users/${id}/offboard`, { reassignTo }),
+    mutationFn: ({ id, reassignTo, remove = false }: { id: string; reassignTo: string | null; remove?: boolean }) =>
+      apiClient.post<OffboardingResult>(`/users/${id}/${remove ? "delete" : "offboard"}`, { reassignTo }),
     onSuccess: refresh,
   });
 }

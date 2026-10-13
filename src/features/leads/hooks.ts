@@ -191,6 +191,21 @@ export function useRestoreLead() {
   return useMutation({ mutationFn: (id: string) => apiClient.post<Lead>(`/leads/${id}/restore`), onSuccess: () => refresh() });
 }
 
+/** Managers: delete a lead in the recycle bin for good, with its history. */
+export function usePurgeLead() {
+  const refresh = useRefreshLead();
+  return useMutation({ mutationFn: (id: string) => apiClient.delete<null>(`/leads/${id}/permanent`), onSuccess: () => refresh() });
+}
+
+/** Managers: delete every lead in the recycle bin for good. */
+export function useEmptyTrash() {
+  const refresh = useRefreshLead();
+  return useMutation({
+    mutationFn: () => apiClient.delete<{ deleted: number }>("/leads/trash"),
+    onSuccess: () => refresh(),
+  });
+}
+
 export interface LeadViews {
   views: Activity[];
   timeByUser: { user: { id: string; name: string }; activeMs: number; idleMs: number; lastAt: string }[];
