@@ -12,7 +12,7 @@ import { EmptyView } from "@/components/ui/state-views";
 import { useCurrentUser } from "@/features/auth/auth-provider";
 import { countFilters, LeadFiltersSheet, NO_FILTERS, type LeadFilters } from "@/features/leads/components/lead-filters-sheet";
 import { LeadRow } from "@/features/leads/components/lead-row";
-import { useBulkAssign, useLeads } from "@/features/leads/hooks";
+import { useBulkAssign, useBulkDeleteLeads, useLeads } from "@/features/leads/hooks";
 import { LEAD_RATINGS, type Lead, type LeadListParams } from "@/features/leads/types";
 import { useCanEdit } from "@/features/organizations/hooks";
 import { UNASSIGNED, UserPickerSheet } from "@/features/users/components/user-picker-sheet";
@@ -55,6 +55,7 @@ export default function LeadsScreen() {
   const [selected, setSelected] = useState<Set<string> | null>(null);
   const [assigning, setAssigning] = useState(false);
   const bulkAssign = useBulkAssign();
+  const bulkDelete = useBulkDeleteLeads();
 
   // A link replaces the filters with its own.
   const [appliedLink, setAppliedLink] = useState<string | undefined>(undefined);
@@ -151,6 +152,33 @@ export default function LeadsScreen() {
     );
   }
 
+  function deleteSelected() {
+    if (!selected || selected.size === 0) return;
+    const count = selected.size;
+    Alert.alert(
+      `Move ${count} lead${count === 1 ? "" : "s"} to the recycle bin?`,
+      "They will be hidden from every list. You can restore them from the recycle bin.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Move to bin",
+          style: "destructive",
+          onPress: () =>
+            bulkDelete.mutate([...selected], {
+              onSuccess: (result) => {
+                setSelected(null);
+                Alert.alert(
+                  "Leads deleted",
+                  `${result.deleted} lead${result.deleted === 1 ? "" : "s"} moved to the recycle bin.`,
+                );
+              },
+              onError: (error) => Alert.alert("Couldn't delete the leads", getErrorMessage(error)),
+            }),
+        },
+      ],
+    );
+  }
+
   const selectedCount = selected?.size ?? 0;
 
   return (
@@ -243,6 +271,15 @@ export default function LeadsScreen() {
             onPress={() => setAssigning(true)}
             style={styles.barButton}
           />
+          <Button
+            title="Delete"
+            icon="trash-outline"
+            variant="danger"
+            disabled={selectedCount === 0}
+            loading={bulkDelete.isPending}
+            onPress={deleteSelected}
+            style={styles.barButton}
+          />
         </View>
       )}
 
@@ -287,6 +324,7 @@ const styles = StyleSheet.create({
   chips: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   selectionBar: {
     flexDirection: "row",
+    flexWrap: "wrap",
     alignItems: "center",
     gap: spacing.sm,
     paddingHorizontal: spacing.lg,

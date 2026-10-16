@@ -186,6 +186,16 @@ export function useDeleteLead() {
   return useMutation({ mutationFn: (id: string) => apiClient.delete<null>(`/leads/${id}`), onSuccess: () => refresh() });
 }
 
+/** Managers: move several leads to the recycle bin at once. */
+export function useBulkDeleteLeads() {
+  const refresh = useRefreshLead();
+  return useMutation({
+    mutationFn: (leadIds: string[]) =>
+      apiClient.post<{ deleted: number; notFound: number }>("/leads/bulk-delete", { leadIds }),
+    onSuccess: () => refresh(),
+  });
+}
+
 export function useRestoreLead() {
   const refresh = useRefreshLead();
   return useMutation({ mutationFn: (id: string) => apiClient.post<Lead>(`/leads/${id}/restore`), onSuccess: () => refresh() });
@@ -195,6 +205,30 @@ export function useRestoreLead() {
 export function usePurgeLead() {
   const refresh = useRefreshLead();
   return useMutation({ mutationFn: (id: string) => apiClient.delete<null>(`/leads/${id}/permanent`), onSuccess: () => refresh() });
+}
+
+/** Managers: restore several leads; ones that clash with an existing lead or the plan limit come back in `failed`. */
+export function useBulkRestoreLeads() {
+  const refresh = useRefreshLead();
+  return useMutation({
+    mutationFn: (leadIds: string[]) =>
+      apiClient.post<{
+        restored: number;
+        failed: { id: string; businessName: string; reason: string }[];
+        notFound: number;
+      }>("/leads/trash/restore", { leadIds }),
+    onSuccess: () => refresh(),
+  });
+}
+
+/** Managers: delete several leads in the recycle bin for good. */
+export function useBulkPurgeLeads() {
+  const refresh = useRefreshLead();
+  return useMutation({
+    mutationFn: (leadIds: string[]) =>
+      apiClient.post<{ deleted: number; notFound: number }>("/leads/trash/delete", { leadIds }),
+    onSuccess: () => refresh(),
+  });
 }
 
 /** Managers: delete every lead in the recycle bin for good. */
