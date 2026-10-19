@@ -53,7 +53,7 @@ export interface Lead {
   updatedAt: string;
 }
 
-export const LEAD_SORTS = ["-createdAt", "-updatedAt", "-score", "name"] as const;
+export const LEAD_SORTS = ["-createdAt", "-updatedAt", "-assignedAt", "-score", "name"] as const;
 export type LeadSort = (typeof LEAD_SORTS)[number];
 
 export interface LeadListParams {
@@ -67,6 +67,10 @@ export interface LeadListParams {
   assignedTo?: string;
   /** Only open leads nobody has contacted for the company's "stale after" days */
   stale?: boolean;
+  /** Assigned on or after this day, "YYYY-MM-DD" in the company's time zone */
+  assignedFrom?: string;
+  /** Assigned on or before this day, "YYYY-MM-DD" in the company's time zone */
+  assignedUntil?: string;
   sort?: LeadSort;
 }
 

@@ -4,7 +4,7 @@ import { memo } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/ui/app-text";
-import { formatTimeAgo } from "@/lib/format";
+import { formatDateTime, formatTimeAgo } from "@/lib/format";
 import { radius, spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
 
@@ -15,6 +15,8 @@ interface LeadRowProps {
   lead: Lead;
   /** Managers see who each lead belongs to */
   showAssignee?: boolean;
+  /** Adds when the lead was given to its agent */
+  showAssignedAt?: boolean;
   /** Selecting several leads: a tap toggles instead of opening the lead */
   selecting?: boolean;
   selected?: boolean;
@@ -27,6 +29,7 @@ interface LeadRowProps {
 export const LeadRow = memo(function LeadRow({
   lead,
   showAssignee,
+  showAssignedAt,
   selecting,
   selected,
   onToggle,
@@ -73,6 +76,11 @@ export const LeadRow = memo(function LeadRow({
           {showAssignee && `${lead.assignedTo?.name ?? "Unassigned"} · `}
           {lead.lastContactedAt ? `Contacted ${formatTimeAgo(lead.lastContactedAt)}` : "Not contacted yet"}
         </AppText>
+        {showAssignedAt && lead.assignedAt && (
+          <AppText variant="small" muted numberOfLines={1}>
+            Assigned {formatDateTime(lead.assignedAt)}
+          </AppText>
+        )}
       </View>
       {!selecting && <Ionicons name="chevron-forward" size={18} color={colors.mutedText} />}
     </Pressable>

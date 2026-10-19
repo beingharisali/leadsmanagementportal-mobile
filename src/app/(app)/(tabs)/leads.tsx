@@ -10,6 +10,7 @@ import { InfiniteList } from "@/components/ui/infinite-list";
 import { SearchField } from "@/components/ui/search-field";
 import { EmptyView } from "@/components/ui/state-views";
 import { useCurrentUser } from "@/features/auth/auth-provider";
+import { assignedRangeFor, useCompanyToday } from "@/features/leads/components/assigned-date-filter";
 import { countFilters, LeadFiltersSheet, NO_FILTERS, type LeadFilters } from "@/features/leads/components/lead-filters-sheet";
 import { LeadRow } from "@/features/leads/components/lead-row";
 import { useBulkAssign, useBulkDeleteLeads, useLeads } from "@/features/leads/hooks";
@@ -50,6 +51,7 @@ export default function LeadsScreen() {
   const [pickingAgent, setPickingAgent] = useState(false);
   const debouncedSearch = useDebouncedValue(search.trim());
   const users = useAssignableUsers(manager);
+  const today = useCompanyToday();
 
   // Selecting several leads to assign at once (managers): long-press a lead to start.
   const [selected, setSelected] = useState<Set<string> | null>(null);
@@ -93,10 +95,11 @@ export default function LeadsScreen() {
       tag: filters.tag || undefined,
       rating: filters.rating.length ? filters.rating : undefined,
       stale: filters.stale || undefined,
+      ...assignedRangeFor(filters, today),
       sort: filters.sort,
       assignedTo: manager && scope !== "all" ? scope : undefined,
     }),
-    [debouncedSearch, filters, scope, manager],
+    [debouncedSearch, filters, scope, manager, today],
   );
 
   const leads = useLeads(query);
@@ -122,6 +125,7 @@ export default function LeadsScreen() {
       <LeadRow
         lead={item}
         showAssignee={manager}
+        showAssignedAt
         selecting={!!selected}
         selected={selected?.has(item.id)}
         onToggle={toggle}

@@ -20,6 +20,7 @@ export const leadRatingColors = { hot: "rose", warm: "amber", cold: "sky" } as c
 export const leadSortLabels: Record<LeadSort, string> = {
   "-createdAt": "Newest first",
   "-updatedAt": "Recently updated",
+  "-assignedAt": "Recently assigned",
   "-score": "Highest score",
   name: "Name (A–Z)",
 };
