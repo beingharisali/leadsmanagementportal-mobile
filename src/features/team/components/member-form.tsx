@@ -7,10 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
 import { TextField } from "@/components/ui/text-field";
+import { useCurrentUser } from "@/features/auth/auth-provider";
 import type { UserPayload } from "@/features/users/hooks";
 import { ASSIGNABLE_ROLES, passwordProblem, userRoleLabels, type AssignableRole, type User } from "@/features/users/types";
 import { ApiClientError, getErrorMessage } from "@/lib/api-client";
 import { spacing } from "@/theme/colors";
+
+import { TeamAssignmentSection, type TeamAssignmentValue } from "./team-assignment-section";
 
 interface MemberFormProps {
   /** Editing this person; otherwise adding someone new */
@@ -32,6 +35,14 @@ export function MemberForm({ user, onSubmit }: MemberFormProps) {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+
+  const me = useCurrentUser();
+  const hasTeamWorkspace = me.organization?.features.includes("teamWorkspace") ?? false;
+  const [team, setTeam] = useState<TeamAssignmentValue>({
+    departments: user?.departments ?? [],
+    reportsTo: user?.reportsTo ?? null,
+    customRoles: user?.customRoles ?? [],
+  });
 
   function validate() {
     const found: Record<string, string> = {};
@@ -56,6 +67,9 @@ export function MemberForm({ user, onSubmit }: MemberFormProps) {
         phone: phone.trim(),
         ...(!isOwner && { role }),
         ...(password && { password }),
+        ...(hasTeamWorkspace && !isOwner
+          ? { departments: team.departments, reportsTo: team.reportsTo, customRoles: team.customRoles }
+          : {}),
       });
     } catch (error) {
       const apiErrors =
@@ -117,6 +131,9 @@ export function MemberForm({ user, onSubmit }: MemberFormProps) {
           }
         />
       </Card>
+      {hasTeamWorkspace && !isOwner && (
+        <TeamAssignmentSection value={team} onChange={setTeam} excludeUserId={user?.id ?? me.id} />
+      )}
       <Button title={editing ? "Save changes" : "Add member"} icon="checkmark" loading={saving} onPress={() => void submit()} />
     </>
   );

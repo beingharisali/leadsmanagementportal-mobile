@@ -38,6 +38,10 @@ export interface UserPayload {
   password?: string;
   isActive?: boolean;
   shift?: UserShift | null;
+  /** Team Workspace assignments */
+  departments?: string[];
+  reportsTo?: string | null;
+  customRoles?: string[];
 }
 
 export interface OffboardingPreview {
