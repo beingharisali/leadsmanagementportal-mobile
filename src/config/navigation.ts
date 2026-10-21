@@ -16,8 +16,6 @@ export interface MoreItem {
   roles?: UserRole[];
   /** Part of a plan feature: shown with a lock on plans without it */
   feature?: PlanFeature;
-  /** Hidden entirely (not shown with a lock) when `feature` isn't available — for per-company features */
-  hideWhenLocked?: boolean;
   /** Heapware staff only */
   platformAdmin?: boolean;
   /** The screen it opens; items without one show "coming soon" */
@@ -96,36 +94,6 @@ const MORE_SECTIONS: MoreSection[] = [
     ],
   },
   {
-    label: "Team Workspace",
-    items: [
-      {
-        title: "Departments",
-        subtitle: "Teams and their leads",
-        icon: "people-circle-outline",
-        feature: "teamWorkspace",
-        hideWhenLocked: true,
-        href: "/team/departments",
-      },
-      {
-        title: "Org chart",
-        subtitle: "Who reports to whom",
-        icon: "git-network-outline",
-        feature: "teamWorkspace",
-        hideWhenLocked: true,
-        href: "/team/org-chart",
-      },
-      {
-        title: "Roles & permissions",
-        subtitle: "Custom roles and access",
-        icon: "shield-checkmark-outline",
-        roles: MANAGER_ROLES,
-        feature: "teamWorkspace",
-        hideWhenLocked: true,
-        href: "/team/roles",
-      },
-    ],
-  },
-  {
     label: "Settings",
     items: [
       { title: "Company", subtitle: "Name, details and logo", icon: "business-outline", roles: ["owner"], href: "/settings/company" },
@@ -182,16 +150,11 @@ const MORE_SECTIONS: MoreSection[] = [
 ];
 
 /** The sections and items this user can see. */
-export function moreSectionsFor(user: Pick<User, "role" | "isPlatformAdmin" | "organization">) {
-  const features = user.organization?.features ?? [];
+export function moreSectionsFor(user: Pick<User, "role" | "isPlatformAdmin">) {
   return MORE_SECTIONS.map((section) => ({
     ...section,
     items: section.items.filter(
-      (item) =>
-        (!item.roles || item.roles.includes(user.role)) &&
-        (!item.platformAdmin || user.isPlatformAdmin) &&
-        // Per-company features (e.g. Team Workspace) are hidden entirely when off.
-        (!item.hideWhenLocked || !item.feature || features.includes(item.feature)),
+      (item) => (!item.roles || item.roles.includes(user.role)) && (!item.platformAdmin || user.isPlatformAdmin),
     ),
   })).filter((section) => section.items.length > 0);
 }

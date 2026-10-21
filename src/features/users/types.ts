@@ -1,5 +1,4 @@
 import type { OrganizationSummary } from "@/features/organizations/types";
-import type { ResolvedPermissions } from "@/features/team/types";
 
 /** Mirrors the API (server/src/modules/users/user.constants.ts). */
 export const USER_ROLES = ["owner", "admin", "agent"] as const;
@@ -35,14 +34,6 @@ export interface User {
   organization?: OrganizationSummary;
   /** Their own working hours instead of the company's shift */
   shift?: UserShift | null;
-  /** Team Workspace: department ids this person belongs to */
-  departments?: string[];
-  /** Team Workspace: who this person reports to (user id) */
-  reportsTo?: string | null;
-  /** Team Workspace: custom role ids */
-  customRoles?: string[];
-  /** Only on the signed-in user (`/auth/me`), when Team Workspace is on */
-  permissions?: ResolvedPermissions;
   lastLoginAt?: string;
   createdAt: string;
   updatedAt: string;

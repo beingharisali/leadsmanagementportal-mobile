@@ -27,15 +27,7 @@ import {
   useUpdateOrganization,
   type PlatformOrganizationDetail,
 } from "@/features/platform/hooks";
-import {
-  PLAN_KEYS,
-  PLATFORM_GRANTED_FEATURES,
-  formatBytes,
-  planFeatureLabels,
-  planLabels,
-  type PlanFeature,
-  type PlanKey,
-} from "@/features/plans/types";
+import { PLAN_KEYS, formatBytes, planLabels, type PlanKey } from "@/features/plans/types";
 import { userRoleLabels } from "@/features/users/types";
 import { getErrorMessage } from "@/lib/api-client";
 import { formatDate, formatDateTime } from "@/lib/format";
@@ -78,16 +70,6 @@ function ManageCompany({ organization, onRefresh }: { organization: PlatformOrga
   const [paidUntil, setPaidUntil] = useState<Date | null>(organization.paidUntil ? new Date(organization.paidUntil) : null);
   const [nameError, setNameError] = useState<string>();
   const [sheet, setSheet] = useState<"invoice" | "support" | "delete" | null>(null);
-
-  function toggleFeature(feature: PlanFeature, enabled: boolean) {
-    update.mutate(
-      { id: organization.id, payload: { featureOverrides: { [feature]: enabled } } },
-      {
-        onSuccess: () => Alert.alert(`${planFeatureLabels[feature]} ${enabled ? "enabled" : "disabled"}`),
-        onError: (error) => Alert.alert("Couldn't change features", getErrorMessage(error)),
-      },
-    );
-  }
 
   function save() {
     if (name.trim().length < 2) return setNameError("Company name is required");
@@ -221,28 +203,6 @@ function ManageCompany({ organization, onRefresh }: { organization: PlatformOrga
         )}
         <Button title="Save changes" icon="checkmark" loading={update.isPending && !update.variables?.payload.status} onPress={save} />
       </Card>
-
-      {!isOwn && (
-        <Card>
-          <AppText variant="heading">Features</AppText>
-          <AppText variant="small" muted>
-            Turn add-on features on or off for this company.
-          </AppText>
-          <View style={styles.chips}>
-            {PLATFORM_GRANTED_FEATURES.map((feature) => {
-              const on = organization.features.includes(feature);
-              return (
-                <Chip
-                  key={feature}
-                  label={`${planFeatureLabels[feature]}: ${on ? "On" : "Off"}`}
-                  selected={on}
-                  onPress={() => !update.isPending && toggleFeature(feature, !on)}
-                />
-              );
-            })}
-          </View>
-        </Card>
-      )}
 
       <Card>
         <AppText variant="heading">Owner and admins</AppText>

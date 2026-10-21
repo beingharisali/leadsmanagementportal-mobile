@@ -2,18 +2,8 @@
 export const PLAN_KEYS = ["starter", "growth", "business"] as const;
 export type PlanKey = (typeof PLAN_KEYS)[number];
 
-export const PLAN_FEATURES = [
-  "import",
-  "customFields",
-  "templates",
-  "monitoring",
-  "auditLog",
-  "teamWorkspace",
-] as const;
+export const PLAN_FEATURES = ["import", "customFields", "templates", "monitoring", "auditLog"] as const;
 export type PlanFeature = (typeof PLAN_FEATURES)[number];
-
-/** Features Heapware grants per company (not part of any plan by default). */
-export const PLATFORM_GRANTED_FEATURES: PlanFeature[] = ["teamWorkspace"];
 
 export type PlanLimit = "users" | "leads" | "storageBytes";
 export type PlanLimits = Record<PlanLimit, number>;
@@ -30,7 +20,6 @@ export const planFeatureLabels: Record<PlanFeature, string> = {
   templates: "WhatsApp & email templates",
   monitoring: "Live status, timesheets and view as agent",
   auditLog: "Activity feed",
-  teamWorkspace: "Team Workspace (departments, roles & permissions)",
 };
 
 export interface PlanDefinition {

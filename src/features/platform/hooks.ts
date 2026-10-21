@@ -72,8 +72,6 @@ export interface UpdateOrganizationPayload {
   trialEndsAt?: string | null;
   /** `null` = paid with no end date */
   paidUntil?: string | null;
-  /** Grant (`true`) or revoke (`false`) a feature; `null` reverts to the plan default */
-  featureOverrides?: Partial<Record<PlanFeature, boolean | null>>;
 }
 
 const platformKeys = { all: ["platform"] as const };

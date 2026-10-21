@@ -30,13 +30,6 @@ export default function AppLayout() {
         <Stack.Screen name="team/index" options={{ title: "Team" }} />
         <Stack.Screen name="team/new" options={{ title: "Add member" }} />
         <Stack.Screen name="team/[id]" options={{ title: "Edit member" }} />
-        <Stack.Screen name="team/departments/index" options={{ title: "Departments" }} />
-        <Stack.Screen name="team/departments/new" options={{ title: "New department" }} />
-        <Stack.Screen name="team/departments/[id]" options={{ title: "Edit department" }} />
-        <Stack.Screen name="team/roles/index" options={{ title: "Roles & permissions" }} />
-        <Stack.Screen name="team/roles/new" options={{ title: "New role" }} />
-        <Stack.Screen name="team/roles/[id]" options={{ title: "Edit role" }} />
-        <Stack.Screen name="team/org-chart" options={{ title: "Org chart" }} />
         <Stack.Screen name="activity" options={{ title: "Activity feed" }} />
         <Stack.Screen name="monitoring/index" options={{ title: "Live status" }} />
         <Stack.Screen name="monitoring/[userId]" options={{ title: "" }} />
