@@ -3,7 +3,7 @@ import type { Href } from "expo-router";
 import type { ComponentProps } from "react";
 
 import type { PlanFeature } from "@/features/plans/types";
-import { MANAGER_ROLES, type User, type UserRole } from "@/features/users/types";
+import { LEAD_ROLES, MANAGER_ROLES, type User, type UserRole } from "@/features/users/types";
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
 
@@ -16,10 +16,21 @@ export interface MoreItem {
   roles?: UserRole[];
   /** Part of a plan feature: shown with a lock on plans without it */
   feature?: PlanFeature;
+  /** With `feature`: left out entirely (rather than locked) when the company doesn't have it */
+  hideWhenLocked?: boolean;
   /** Heapware staff only */
   platformAdmin?: boolean;
+  /** Shown only with this work access (see features/tasks/hooks.ts `useWorkAccess`) */
+  requires?: keyof WorkAccessFlags;
   /** The screen it opens; items without one show "coming soon" */
   href?: Href;
+}
+
+/** Which work screens (tasks, departments, reports) someone can use. */
+export interface WorkAccessFlags {
+  tasks: boolean;
+  departments: boolean;
+  taskReports: boolean;
 }
 
 export interface MoreSection {
@@ -33,9 +44,30 @@ export interface MoreSection {
  */
 const MORE_SECTIONS: MoreSection[] = [
   {
+    label: "Work",
+    items: [
+      { title: "Tasks", subtitle: "Yours and your team's", icon: "clipboard-outline", requires: "tasks", href: "/tasks" },
+      { title: "Projects", subtitle: "Client work and progress", icon: "folder-open-outline", requires: "tasks", href: "/projects" },
+      {
+        title: "Task reports",
+        subtitle: "How each person is doing",
+        icon: "bar-chart-outline",
+        requires: "taskReports",
+        href: "/task-reports",
+      },
+      {
+        title: "Departments",
+        subtitle: "Heads and people",
+        icon: "git-network-outline",
+        requires: "departments",
+        href: "/departments",
+      },
+    ],
+  },
+  {
     label: "Team",
     items: [
-      { title: "Pipeline", subtitle: "Leads by stage", icon: "git-branch-outline", href: "/pipeline" },
+      { title: "Pipeline", subtitle: "Leads by stage", icon: "git-branch-outline", roles: LEAD_ROLES, href: "/pipeline" },
       { title: "Team", subtitle: "Members and invitations", icon: "people-outline", roles: MANAGER_ROLES, href: "/team" },
       {
         title: "Handover requests",
@@ -51,6 +83,15 @@ const MORE_SECTIONS: MoreSection[] = [
         roles: MANAGER_ROLES,
         feature: "monitoring",
         href: "/monitoring",
+      },
+      {
+        title: "Check-ins",
+        subtitle: "Who's in, breaks and locations",
+        icon: "location-outline",
+        roles: MANAGER_ROLES,
+        feature: "checkIns",
+        hideWhenLocked: true,
+        href: "/check-ins",
       },
       {
         title: "Timesheets",
@@ -149,12 +190,17 @@ const MORE_SECTIONS: MoreSection[] = [
   },
 ];
 
-/** The sections and items this user can see. */
-export function moreSectionsFor(user: Pick<User, "role" | "isPlatformAdmin">) {
+/** The sections and items this user can see. Without `work` (still loading), work items are left out. */
+export function moreSectionsFor(user: Pick<User, "role" | "isPlatformAdmin" | "organization">, work?: WorkAccessFlags) {
+  const features = user.organization?.features;
   return MORE_SECTIONS.map((section) => ({
     ...section,
     items: section.items.filter(
-      (item) => (!item.roles || item.roles.includes(user.role)) && (!item.platformAdmin || user.isPlatformAdmin),
+      (item) =>
+        (!item.roles || item.roles.includes(user.role)) &&
+        (!item.platformAdmin || user.isPlatformAdmin) &&
+        (!item.requires || Boolean(work?.[item.requires])) &&
+        !(item.hideWhenLocked && item.feature && features && !features.includes(item.feature)),
     ),
   })).filter((section) => section.items.length > 0);
 }

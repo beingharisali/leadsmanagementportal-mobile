@@ -30,7 +30,20 @@ export default function AppLayout() {
         <Stack.Screen name="team/index" options={{ title: "Team" }} />
         <Stack.Screen name="team/new" options={{ title: "Add member" }} />
         <Stack.Screen name="team/[id]" options={{ title: "Edit member" }} />
+        <Stack.Screen name="team/roles" options={{ title: "Team roles" }} />
         <Stack.Screen name="activity" options={{ title: "Activity feed" }} />
+        <Stack.Screen name="tasks/index" options={{ title: "Tasks" }} />
+        <Stack.Screen name="tasks/new" options={{ title: "New task" }} />
+        <Stack.Screen name="tasks/[id]/index" options={{ title: "Task" }} />
+        <Stack.Screen name="tasks/[id]/edit" options={{ title: "Edit task" }} />
+        <Stack.Screen name="projects/index" options={{ title: "Projects" }} />
+        <Stack.Screen name="projects/new" options={{ title: "New project" }} />
+        <Stack.Screen name="projects/[id]/index" options={{ title: "" }} />
+        <Stack.Screen name="projects/[id]/edit" options={{ title: "Edit project" }} />
+        <Stack.Screen name="departments/index" options={{ title: "Departments" }} />
+        <Stack.Screen name="departments/[id]" options={{ title: "" }} />
+        <Stack.Screen name="task-reports" options={{ title: "Task reports" }} />
+        <Stack.Screen name="check-ins" options={{ title: "Check-ins" }} />
         <Stack.Screen name="monitoring/index" options={{ title: "Live status" }} />
         <Stack.Screen name="monitoring/[userId]" options={{ title: "" }} />
         <Stack.Screen name="timesheets" options={{ title: "Timesheets" }} />

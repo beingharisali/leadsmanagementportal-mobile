@@ -69,7 +69,9 @@ export function SessionItem({ session, timeZone, showDate }: { session: Session;
  */
 export function TimesheetCard({ row, by, timeZone }: { row: TimesheetRow; by: "user" | "date"; timeZone: string }) {
   const { colors } = useTheme();
-  const absent = row.loggedInMs === 0 && row.actions === 0;
+  // With check-ins the day is measured from them (the row then carries `checkInAt`).
+  const checkIns = "checkInAt" in row;
+  const absent = checkIns ? !row.checkInAt : row.loggedInMs === 0 && row.actions === 0;
   const dayOff = absent && !row.isWorkDay;
   const activeShare = row.loggedInMs > 0 ? Math.round((row.activeMs / row.loggedInMs) * 100) : null;
   const time = (value: string | null) => (value ? formatTime(value, timeZone) : "—");
@@ -93,13 +95,20 @@ export function TimesheetCard({ row, by, timeZone }: { row: TimesheetRow; by: "u
         {dayOff ? (
           <Badge label="Day off" />
         ) : absent ? (
-          <Badge label={row.isWorkDay ? "Not signed in" : "—"} color={row.isWorkDay ? "rose" : "slate"} />
+          <Badge label={row.isWorkDay ? (checkIns ? "Not checked in" : "Not signed in") : "—"} color={row.isWorkDay ? "rose" : "slate"} />
         ) : (
           <AppText weight="700">{formatDuration(row.activeMs)}</AppText>
         )}
       </View>
       {!absent && (
         <>
+          {checkIns && (
+            <AppText variant="small" weight="600">
+              Checked in {time(row.checkInAt ?? null)} – {row.checkOutAt ? time(row.checkOutAt) : row.notCheckedOut ? "didn't check out" : "still in"} ·
+              worked {formatDuration(row.checkedInMs ?? 0)}
+              {row.breaks?.length ? ` · ${row.breaks.length} ${row.breaks.length === 1 ? "break" : "breaks"} (${formatDuration(row.breakMs ?? 0)})` : ""}
+            </AppText>
+          )}
           <AppText variant="small" muted>
             {time(row.firstLoginAt ?? row.firstSeenAt)} – {time(row.lastLogoutAt)} · logged in {formatDuration(row.loggedInMs)}
             {activeShare !== null ? ` · ${activeShare}% active` : ""}

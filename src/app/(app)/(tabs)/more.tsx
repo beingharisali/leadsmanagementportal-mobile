@@ -9,18 +9,22 @@ import { moreSectionsFor } from "@/config/navigation";
 import { useAuth, useCurrentUser } from "@/features/auth/auth-provider";
 import { useSupportSwitch } from "@/features/platform/support-switch";
 import { usePendingReassignmentCount } from "@/features/reassignments/hooks";
-import { isManagerRole, userRoleLabels } from "@/features/users/types";
+import { useRoleLabel } from "@/features/member-roles/hooks";
+import { useWorkAccess } from "@/features/tasks/hooks";
+import { isManagerRole } from "@/features/users/types";
 import { APP_VERSION } from "@/lib/config";
 import { spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
 
 export default function MoreScreen() {
   const user = useCurrentUser();
+  const roleLabel = useRoleLabel();
   const { signOut } = useAuth();
   const support = useSupportSwitch();
   const { colors } = useTheme();
   const features = user.organization?.features ?? [];
   const pendingHandovers = usePendingReassignmentCount(isManagerRole(user.role)).data ?? 0;
+  const work = useWorkAccess();
 
   function confirmSignOut() {
     Alert.alert("Sign out?", "You'll need your email and password to sign in again.", [
@@ -36,12 +40,12 @@ export default function MoreScreen() {
         <ListRow
           icon="person-circle-outline"
           title={user.name}
-          subtitle={`${userRoleLabels[user.role]} · ${user.email}`}
+          subtitle={`${roleLabel(user)} · ${user.email}`}
           onPress={() => router.push("/account")}
         />
       </Card>
 
-      {moreSectionsFor(user).map((section) => (
+      {moreSectionsFor(user, work).map((section) => (
         <View key={section.label} style={styles.section}>
           <AppText variant="small" muted style={styles.sectionLabel}>
             {section.label.toUpperCase()}

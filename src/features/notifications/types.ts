@@ -13,7 +13,19 @@ export type NotificationType =
   | "stale_leads"
   | "lead_expired"
   | "reassignment_requested"
-  | "reassignment_decided";
+  | "reassignment_decided"
+  | "task_assigned"
+  | "task_due_soon"
+  | "task_overdue"
+  | "task_comment"
+  | "task_mention"
+  | "task_submitted"
+  | "task_approved"
+  | "task_rejected"
+  | "task_completed"
+  | "project_added"
+  | "check_in_late"
+  | "check_in_missing";
 
 export interface AppNotification {
   id: string;
@@ -23,6 +35,9 @@ export interface AppNotification {
   actor?: UserSummary;
   /** Lead id; the notification opens it */
   lead?: string;
+  /** Task or project id; the notification opens it */
+  task?: string;
+  project?: string;
   readAt?: string;
   createdAt: string;
 }
@@ -37,4 +52,16 @@ export const notificationIcons: Record<NotificationType, ComponentProps<typeof I
   lead_expired: "return-down-back-outline",
   reassignment_requested: "swap-horizontal-outline",
   reassignment_decided: "swap-horizontal-outline",
+  task_assigned: "clipboard-outline",
+  task_due_soon: "alarm-outline",
+  task_overdue: "hourglass-outline",
+  task_comment: "chatbubble-outline",
+  task_mention: "at",
+  task_submitted: "send-outline",
+  task_approved: "thumbs-up-outline",
+  task_rejected: "thumbs-down-outline",
+  task_completed: "checkmark-circle-outline",
+  project_added: "folder-open-outline",
+  check_in_late: "alarm-outline",
+  check_in_missing: "person-remove-outline",
 };

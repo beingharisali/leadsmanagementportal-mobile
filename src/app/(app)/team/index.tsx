@@ -12,6 +12,7 @@ import { SearchField } from "@/components/ui/search-field";
 import { Sheet } from "@/components/ui/sheet";
 import { EmptyView } from "@/components/ui/state-views";
 import { useCurrentUser } from "@/features/auth/auth-provider";
+import { useRoleLabel } from "@/features/member-roles/hooks";
 import { useCanEdit } from "@/features/organizations/hooks";
 import { InviteSheet } from "@/features/team/components/invite-sheet";
 import { OffboardSheet } from "@/features/team/components/offboard-sheet";
@@ -19,7 +20,7 @@ import { PendingInvitations } from "@/features/team/components/pending-invitatio
 import { ShiftSheet } from "@/features/team/components/shift-sheet";
 import { useViewAsControls } from "@/features/tracking/view-as";
 import { useUpdateUser, useUsers, type UserListParams } from "@/features/users/hooks";
-import { userRoleLabels, type User } from "@/features/users/types";
+import { hasTeamAccess, type User } from "@/features/users/types";
 import { getErrorMessage } from "@/lib/api-client";
 import { flattenPages } from "@/lib/infinite";
 import { formatDateTime, getInitials } from "@/lib/format";
@@ -32,6 +33,7 @@ const ROLE_FILTERS: { value: UserListParams["role"]; label: string }[] = [
   { value: "owner", label: "Owner" },
   { value: "admin", label: "Admins" },
   { value: "agent", label: "Agents" },
+  { value: "member", label: "Team members" },
 ];
 const STATUS_FILTERS: { value: UserListParams["status"]; label: string }[] = [
   { value: undefined, label: "Any status" },
@@ -39,7 +41,10 @@ const STATUS_FILTERS: { value: UserListParams["status"]; label: string }[] = [
   { value: "inactive", label: "Inactive" },
 ];
 
-/** Owners and admins: invite agents, update their details and control who can sign in. */
+/**
+ * Owners and admins: the whole team, their roles, and who can sign in. Adding,
+ * inviting and custom roles are for the owner, or admins given team access.
+ */
 export default function TeamScreen() {
   const me = useCurrentUser();
   const canEdit = useCanEdit();
@@ -51,6 +56,8 @@ export default function TeamScreen() {
   const update = useUpdateUser();
   const viewAs = useViewAsControls();
   const hasMonitoring = me.organization?.features.includes("monitoring") ?? false;
+  const teamAccess = canEdit && hasTeamAccess(me);
+  const roleLabel = useRoleLabel();
 
   const [inviting, setInviting] = useState(false);
   const [actionsFor, setActionsFor] = useState<User | null>(null);
@@ -88,9 +95,9 @@ export default function TeamScreen() {
 
   const renderItem = useCallback(
     ({ item }: { item: User }) => (
-      <MemberRow user={item} isMe={item.id === me.id} onPress={() => setActionsFor(item)} />
+      <MemberRow user={item} isMe={item.id === me.id} roleLabel={roleLabel(item)} onPress={() => setActionsFor(item)} />
     ),
-    [me.id],
+    [me.id, roleLabel],
   );
 
   const target = actionsFor;
@@ -102,9 +109,10 @@ export default function TeamScreen() {
     <>
       <Stack.Screen
         options={{
-          headerRight: canEdit
+          headerRight: teamAccess
             ? () => (
                 <View style={styles.headerButtons}>
+                  <HeaderButton label="Team roles" icon="pricetags-outline" onPress={() => router.push("/team/roles")} />
                   <HeaderButton label="Add member" icon="person-add-outline" onPress={() => router.push("/team/new")} />
                   <HeaderButton label="Invite by email" icon="mail-outline" onPress={() => setInviting(true)} />
                 </View>
@@ -125,7 +133,7 @@ export default function TeamScreen() {
         fetchNextPage={() => void users.fetchNextPage()}
         header={
           <>
-            <PendingInvitations canWrite={canEdit} />
+            <PendingInvitations canWrite={teamAccess} />
             <SearchField value={search} onChangeText={setSearch} placeholder="Search name, email, phone" />
             <View style={styles.chips}>
               {ROLE_FILTERS.map((f) => (
@@ -143,7 +151,7 @@ export default function TeamScreen() {
           <EmptyView
             icon="people-outline"
             title="No team members found"
-            message={filtered ? "Try another search or clear the filters." : "Invite your agents by email so they can start working leads."}
+            message={filtered ? "Try another search or clear the filters." : "Invite your team by email so they can get started."}
           />
         }
       />
@@ -216,7 +224,17 @@ export default function TeamScreen() {
   );
 }
 
-function MemberRow({ user, isMe, onPress }: { user: User; isMe: boolean; onPress?: () => void }) {
+function MemberRow({
+  user,
+  isMe,
+  roleLabel,
+  onPress,
+}: {
+  user: User;
+  isMe: boolean;
+  roleLabel: string;
+  onPress?: () => void;
+}) {
   const { colors } = useTheme();
   return (
     <Pressable
@@ -245,7 +263,8 @@ function MemberRow({ user, isMe, onPress }: { user: User; isMe: boolean; onPress
           {user.phone ? ` · ${user.phone}` : ""}
         </AppText>
         <View style={styles.badges}>
-          <Badge label={userRoleLabels[user.role]} color={user.role === "agent" ? "slate" : "indigo"} />
+          <Badge label={roleLabel} color={user.role === "agent" || user.role === "member" ? "slate" : "indigo"} />
+          {user.role === "admin" && user.canManageTeam && <Badge label="Team access" color="violet" />}
           <Badge label={user.isActive ? "Active" : "Inactive"} color={user.isActive ? "emerald" : "slate"} />
           {user.shift && <Badge label={`${user.shift.start}–${user.shift.end}`} color="sky" />}
         </View>

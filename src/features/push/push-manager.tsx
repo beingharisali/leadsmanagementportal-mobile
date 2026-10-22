@@ -37,11 +37,17 @@ function Manager({ userId }: { userId: string }) {
     listenForPush({
       onOpen: (data) => {
         void queryClient.invalidateQueries({ queryKey: ["notifications"] });
-        openNotificationTarget({ type: (data.type ?? "follow_up_due") as NotificationType, lead: data.leadId });
+        openNotificationTarget({
+          type: (data.type ?? "follow_up_due") as NotificationType,
+          lead: data.leadId,
+          task: data.taskId,
+          project: data.projectId,
+        });
       },
       onReceive: () => {
         void queryClient.invalidateQueries({ queryKey: ["notifications"] });
         void queryClient.invalidateQueries({ queryKey: ["follow-ups"] });
+        void queryClient.invalidateQueries({ queryKey: ["tasks"] });
       },
     })
       .then((unsubscribe) => {

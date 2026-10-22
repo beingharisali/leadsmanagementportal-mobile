@@ -9,6 +9,8 @@ export interface Invitation {
   email: string;
   name?: string;
   role: AssignableRole;
+  /** A team member's custom role ("General Team" for new invitations) */
+  memberRole?: string | null;
   expiresAt: string;
   sentAt: string;
   invitedBy: { id: string; name: string } | null;
@@ -34,7 +36,8 @@ function useRefresh() {
 export function useCreateInvitation() {
   const refresh = useRefresh();
   return useMutation({
-    mutationFn: (payload: { email: string; name?: string; role: AssignableRole }) =>
+    // Everyone invited joins as "General Team"; their role is changed on the Team screen.
+    mutationFn: (payload: { email: string; name?: string }) =>
       apiClient.post<Invitation>("/invitations", payload),
     // A 502 means it was saved but the email didn't go out: it's in the list with "Resend".
     onSettled: refresh,

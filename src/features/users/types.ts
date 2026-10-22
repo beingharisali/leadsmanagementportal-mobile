@@ -1,7 +1,7 @@
 import type { OrganizationSummary } from "@/features/organizations/types";
 
 /** Mirrors the API (server/src/modules/users/user.constants.ts). */
-export const USER_ROLES = ["owner", "admin", "agent"] as const;
+export const USER_ROLES = ["owner", "admin", "agent", "member"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
 /** Roles with admin rights: all leads, team, reports. The owner also manages the organization. */
@@ -11,10 +11,26 @@ export function isManagerRole(role: UserRole) {
   return MANAGER_ROLES.includes(role);
 }
 
+/** Roles that work with leads (leads, pipeline, follow-ups). Team members with a custom role don't. */
+export const LEAD_ROLES: UserRole[] = ["owner", "admin", "agent"];
+
+export function worksLeads(role: UserRole) {
+  return LEAD_ROLES.includes(role);
+}
+
+/**
+ * Adding members, inviting and managing custom roles: the owner, or an admin
+ * the owner has given team access (server/src/modules/users/team-access.ts).
+ */
+export function hasTeamAccess(user: Pick<User, "role" | "canManageTeam">) {
+  return user.role === "owner" || (user.role === "admin" && Boolean(user.canManageTeam));
+}
+
 export const userRoleLabels: Record<UserRole, string> = {
   owner: "Owner",
   admin: "Admin",
   agent: "Agent",
+  member: "Team member",
 };
 
 export interface User {
@@ -23,6 +39,16 @@ export interface User {
   email: string;
   phone?: string;
   role: UserRole;
+  /** A team member's custom role id (see features/member-roles) */
+  memberRole?: string | null;
+  /** Admins: the owner has let them add / invite people and manage roles */
+  canManageTeam?: boolean;
+  /** The department they work in (see features/departments); the owner has none */
+  department?: string | null;
+  /** Admins and members: the owner lets them give tasks and create projects */
+  canAssignTasks?: boolean;
+  /** Admins and members: the owner lets them manage departments */
+  canManageDepartments?: boolean;
   isActive: boolean;
   /** False only for an owner who signed up and hasn't confirmed their email yet */
   emailVerified: boolean;
@@ -39,8 +65,11 @@ export interface User {
   updatedAt: string;
 }
 
-/** Roles an owner or admin can give (the owner role is never handed out in the app). */
-export const ASSIGNABLE_ROLES = ["admin", "agent"] as const satisfies readonly UserRole[];
+/**
+ * Roles that can be given (the owner role is never handed out in the app).
+ * `member` is a team member with a custom role such as "Developer".
+ */
+export const ASSIGNABLE_ROLES = ["admin", "agent", "member"] as const satisfies readonly UserRole[];
 export type AssignableRole = (typeof ASSIGNABLE_ROLES)[number];
 
 export interface UserShift {

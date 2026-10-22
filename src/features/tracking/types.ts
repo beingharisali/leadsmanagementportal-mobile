@@ -116,7 +116,17 @@ export interface AgentDay {
   activities: Activity[];
 }
 
-export interface TimesheetRow extends StateTotals, ShiftCompliance {
+/** A day's check-in, when the company has "Check-in & attendance" (same as the website). */
+export interface CheckInDayFields {
+  checkInAt: string | null;
+  checkOutAt: string | null;
+  checkedInMs: number;
+  breakMs: number;
+  notCheckedOut: boolean;
+  breaks: { startedAt: string; endedAt: string | null }[];
+}
+
+export interface TimesheetRow extends StateTotals, ShiftCompliance, Partial<CheckInDayFields> {
   user: { id: string; name: string; isActive: boolean };
   /** Set when this person works their own hours rather than the company's */
   customShift: Shift | null;

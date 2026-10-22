@@ -21,14 +21,22 @@ import { MyTargetsCard } from "@/features/dashboard/components/targets-card";
 import { TeamFollowUpsCard } from "@/features/dashboard/components/team-follow-ups-card";
 import { TodayTasksCard } from "@/features/dashboard/components/today-tasks-card";
 import { useLeadStats } from "@/features/leads/hooks";
+import { MemberHome } from "@/features/member-roles/member-home";
+import { TaskSummaryCard } from "@/features/tasks/components/task-summary-card";
 import { useCanEdit } from "@/features/organizations/hooks";
 import { WorkspaceBanners } from "@/features/organizations/workspace-banners";
 import { isManagerRole, userRoleLabels } from "@/features/users/types";
 import { greeting } from "@/lib/format";
 import { spacing } from "@/theme/colors";
 
-/** The dashboard, same as the website's: today's work first, then the numbers. */
+/** Owners, admins and agents get the leads dashboard; team members with a custom role get their own. */
 export default function HomeScreen() {
+  const user = useCurrentUser();
+  return user.role === "member" ? <MemberHome /> : <LeadsHome />;
+}
+
+/** The dashboard, same as the website's: today's work first, then the numbers. */
+function LeadsHome() {
   const user = useCurrentUser();
   const manager = isManagerRole(user.role);
   const canEdit = useCanEdit();
@@ -81,6 +89,7 @@ export default function HomeScreen() {
         <AppText muted>Couldn&apos;t load your numbers. Pull down to try again.</AppText>
       ) : null}
       <RecentLeadsCard manager={manager} />
+      <TaskSummaryCard />
     </Screen>
   );
 }

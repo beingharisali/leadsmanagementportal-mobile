@@ -4,12 +4,10 @@ import { Alert, StyleSheet, View } from "react-native";
 import { AppText } from "@/components/ui/app-text";
 import { Banner } from "@/components/ui/banner";
 import { Button } from "@/components/ui/button";
-import { Chip } from "@/components/ui/chip";
 import { Sheet, useOpenKey } from "@/components/ui/sheet";
 import { TextField } from "@/components/ui/text-field";
 import { useCurrentUser } from "@/features/auth/auth-provider";
 import { useCreateInvitation } from "@/features/invitations/hooks";
-import { ASSIGNABLE_ROLES, userRoleLabels, type AssignableRole } from "@/features/users/types";
 import { ApiClientError, fieldError, getErrorMessage } from "@/lib/api-client";
 import { spacing } from "@/theme/colors";
 
@@ -31,13 +29,12 @@ function InviteSheetBody({ open, onClose }: InviteSheetProps) {
   const invite = useCreateInvitation();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-  const [role, setRole] = useState<AssignableRole>("agent");
   const validEmail = /^\S+@\S+\.\S+$/.test(email.trim());
 
   function send() {
     const to = email.trim().toLowerCase();
     invite.mutate(
-      { email: to, role, ...(name.trim() && { name: name.trim() }) },
+      { email: to, ...(name.trim() && { name: name.trim() }) },
       {
         onSuccess: () => {
           onClose();
@@ -80,7 +77,7 @@ function InviteSheetBody({ open, onClose }: InviteSheetProps) {
             label="Email"
             value={email}
             onChangeText={setEmail}
-            placeholder="agent@company.com"
+            placeholder="name@company.com"
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
@@ -88,16 +85,8 @@ function InviteSheetBody({ open, onClose }: InviteSheetProps) {
           />
           <TextField label="Name (optional)" value={name} onChangeText={setName} autoCapitalize="words" maxLength={100} />
           <View style={styles.group}>
-            <AppText variant="label">Role</AppText>
-            <View style={styles.chips}>
-              {ASSIGNABLE_ROLES.map((r) => (
-                <Chip key={r} label={userRoleLabels[r]} selected={role === r} onPress={() => setRole(r)} />
-              ))}
-            </View>
             <AppText variant="small" muted>
-              {role === "admin"
-                ? "Admins see every lead, manage the team and see reports."
-                : "Agents see and work only the leads given to them or added by them."}
+              They&apos;ll join as General Team. You can change their role on the Team screen once they&apos;ve joined.
             </AppText>
           </View>
         </>
@@ -108,5 +97,4 @@ function InviteSheetBody({ open, onClose }: InviteSheetProps) {
 
 const styles = StyleSheet.create({
   group: { gap: spacing.sm },
-  chips: { flexDirection: "row", gap: spacing.sm },
 });

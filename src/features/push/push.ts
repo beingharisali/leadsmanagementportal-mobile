@@ -107,6 +107,9 @@ export async function unregisterFromPush() {
 export interface PushData {
   type?: string;
   leadId?: string | null;
+  /** Only on task and project notifications */
+  taskId?: string;
+  projectId?: string;
 }
 
 /**

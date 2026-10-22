@@ -5,7 +5,7 @@ import { AppText } from "@/components/ui/app-text";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { isInvitationExpired, useInvitations, useResendInvitation, useRevokeInvitation, type Invitation } from "@/features/invitations/hooks";
-import { userRoleLabels } from "@/features/users/types";
+import { useRoleLabel } from "@/features/member-roles/hooks";
 import { getErrorMessage } from "@/lib/api-client";
 import { formatDate } from "@/lib/format";
 import { useNow } from "@/lib/use-now";
@@ -19,6 +19,7 @@ export function PendingInvitations({ canWrite }: { canWrite: boolean }) {
   const resend = useResendInvitation();
   const revoke = useRevokeInvitation();
   const now = useNow();
+  const roleLabel = useRoleLabel();
   const list = invitations.data ?? [];
   if (list.length === 0) return null;
 
@@ -79,7 +80,7 @@ export function PendingInvitations({ canWrite }: { canWrite: boolean }) {
               </AppText>
             </View>
             <View style={styles.badges}>
-              <Badge label={userRoleLabels[invitation.role]} color={invitation.role === "agent" ? "slate" : "indigo"} />
+              <Badge label={roleLabel(invitation)} color={invitation.role === "admin" ? "indigo" : "slate"} />
               {expired && <Badge label="Expired" color="rose" />}
             </View>
           </Pressable>

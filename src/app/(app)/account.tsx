@@ -11,7 +11,8 @@ import { useChangePassword, useUpdateProfile } from "@/features/account/hooks";
 import { useAuth, useCurrentUser } from "@/features/auth/auth-provider";
 import { useSupportSwitch } from "@/features/platform/support-switch";
 import { NotificationSettingsCard } from "@/features/push/notification-settings";
-import { passwordProblem, userRoleLabels } from "@/features/users/types";
+import { useRoleLabel } from "@/features/member-roles/hooks";
+import { passwordProblem } from "@/features/users/types";
 import { ApiClientError, fieldError, getErrorMessage } from "@/lib/api-client";
 import { getInitials } from "@/lib/format";
 import { useViewAsTarget } from "@/lib/view-as";
@@ -21,6 +22,7 @@ import { useTheme } from "@/theme/use-theme";
 /** Your profile and password (Settings → General on the website), and signing out. */
 export default function AccountScreen() {
   const user = useCurrentUser();
+  const roleLabel = useRoleLabel();
   const { signOut } = useAuth();
   const support = useSupportSwitch();
   const { colors } = useTheme();
@@ -39,7 +41,7 @@ export default function AccountScreen() {
         </View>
         <AppText variant="heading">{user.name}</AppText>
         <AppText muted>{user.email}</AppText>
-        <Badge label={userRoleLabels[user.role]} color="indigo" />
+        <Badge label={roleLabel(user)} color="indigo" />
       </View>
 
       {editable && <ProfileCard key={`${user.name}|${user.phone ?? ""}`} />}

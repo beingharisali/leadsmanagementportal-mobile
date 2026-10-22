@@ -35,6 +35,15 @@ export interface UserPayload {
   email: string;
   phone?: string;
   role?: AssignableRole;
+  /** Required when `role` is "member": their custom role */
+  memberRole?: string | null;
+  /** Owner only: lets an admin add / invite people and manage roles */
+  canManageTeam?: boolean;
+  /** Left out: agents start in Sales, everyone else in General Team */
+  department?: string;
+  /** Owner only, for admins and members */
+  canAssignTasks?: boolean;
+  canManageDepartments?: boolean;
   password?: string;
   isActive?: boolean;
   shift?: UserShift | null;
