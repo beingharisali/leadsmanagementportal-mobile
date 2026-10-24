@@ -2,7 +2,7 @@
   "expo": {
     "name": "GetCloseWise",
     "slug": "getclosewise",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "scheme": "getclosewise",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
