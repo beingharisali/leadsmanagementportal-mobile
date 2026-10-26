@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Location from "expo-location";
 
-import { useCurrentUser } from "@/features/auth/auth-provider";
+import { useAuth } from "@/features/auth/auth-provider";
 import { useHasFeature } from "@/features/plans/hooks";
 import { apiClient } from "@/lib/api-client";
 
@@ -23,10 +23,14 @@ export const checkInKeys = {
   board: (date: string) => [...checkInKeys.all, "board", date] as const,
 };
 
-/** Whether the signed-in person checks in: the company has the feature, and they aren't the owner. */
+/**
+ * Whether the signed-in person checks in: the company has the feature, and they aren't the owner.
+ * Nobody checks in while signed out (the check-in bar is on the sign-in screen too).
+ */
 export function useChecksIn() {
-  const user = useCurrentUser();
-  return useHasFeature("checkIns") && Boolean(user.organization?.features) && user.role !== "owner";
+  const { user } = useAuth();
+  const features = user?.organization?.features;
+  return Boolean(features?.includes("checkIns")) && user?.role !== "owner";
 }
 
 export function useMyCheckIn() {
