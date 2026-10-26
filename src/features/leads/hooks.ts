@@ -197,6 +197,22 @@ export function useDeleteLeadsByStatus() {
   });
 }
 
+/** Moves every lead in one stage to another; agents only move their own leads. */
+export function useMoveLeadsByStatus() {
+  const refresh = useRefreshLead();
+  return useMutation({
+    mutationFn: (body: {
+      from: string;
+      to: string;
+      lostReason?: string;
+      assignedTo?: string;
+      assignedFrom?: string;
+      assignedUntil?: string;
+    }) => apiClient.post<{ moved: number }>("/leads/move-by-status", body),
+    onSuccess: () => refresh(),
+  });
+}
+
 export function useBulkDeleteLeads() {
   const refresh = useRefreshLead();
   return useMutation({

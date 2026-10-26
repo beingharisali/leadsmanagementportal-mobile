@@ -18,6 +18,7 @@ import {
   type AssignedFilter,
 } from "@/features/leads/components/assigned-date-filter";
 import { LeadRow } from "@/features/leads/components/lead-row";
+import { MoveStageSheet } from "@/features/leads/components/move-stage-sheet";
 import { useDeleteLeadsByStatus, useLeads, useLeadStats } from "@/features/leads/hooks";
 import type { Lead } from "@/features/leads/types";
 import { useCanEdit } from "@/features/organizations/hooks";
@@ -68,6 +69,7 @@ export default function PipelineScreen() {
   const filteredTotal = leads.data?.pages[0]?.meta.total;
   const canEdit = useCanEdit();
   const deleteByStatus = useDeleteLeadsByStatus();
+  const [movingStage, setMovingStage] = useState(false);
   const stageLabel = stages.find((s) => s.key === stage)?.label ?? stage;
 
   function deleteStage() {
@@ -188,14 +190,26 @@ export default function PipelineScreen() {
                 {current.count} lead{current.count === 1 ? "" : "s"} · {formatCurrency(current.budget)} total budget
               </AppText>
             )}
-            {manager && canEdit && (filteredTotal ?? 0) > 0 && (
-              <Button
-                title={`Delete all in ${stageLabel}`}
-                icon="trash-outline"
-                variant="secondary"
-                loading={deleteByStatus.isPending}
-                onPress={deleteStage}
-              />
+            {canEdit && (filteredTotal ?? 0) > 0 && (
+              <View style={styles.stageActions}>
+                <Button
+                  title="Move all to…"
+                  icon="swap-horizontal-outline"
+                  variant="secondary"
+                  onPress={() => setMovingStage(true)}
+                  style={styles.stageAction}
+                />
+                {manager && (
+                  <Button
+                    title="Delete all"
+                    icon="trash-outline"
+                    variant="secondary"
+                    loading={deleteByStatus.isPending}
+                    onPress={deleteStage}
+                    style={styles.stageAction}
+                  />
+                )}
+              </View>
             )}
           </>
         }
@@ -219,6 +233,18 @@ export default function PipelineScreen() {
           }}
         />
       )}
+      <MoveStageSheet
+        open={movingStage}
+        onClose={() => setMovingStage(false)}
+        from={stage}
+        count={filteredTotal ?? 0}
+        filters={{
+          assignedTo: params.assignedTo,
+          assignedFrom: params.assignedFrom,
+          assignedUntil: params.assignedUntil,
+        }}
+        filtered={filtered}
+      />
       <Sheet
         open={pickingDate}
         onClose={() => setPickingDate(false)}
@@ -251,4 +277,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   dot: { width: 8, height: 8, borderRadius: radius.pill },
+  stageActions: { flexDirection: "row", gap: spacing.sm },
+  stageAction: { flex: 1 },
 });
