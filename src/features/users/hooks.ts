@@ -3,7 +3,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import { apiClient, type Paginated } from "@/lib/api-client";
 import { nextPage } from "@/lib/infinite";
 
-import type { AssignableRole, User, UserRole, UserShift } from "./types";
+import type { AssignableRole, CheckInRules, User, UserRole, UserShift, WorkingHours } from "./types";
 
 export interface AssignableUser {
   id: string;
@@ -47,6 +47,7 @@ export interface UserPayload {
   password?: string;
   isActive?: boolean;
   shift?: UserShift | null;
+  checkInRules?: CheckInRules | null;
 }
 
 export interface OffboardingPreview {
@@ -116,6 +117,15 @@ export function useUpdateUser() {
       // Editing yourself changes the profile shown around the app.
       void queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
     },
+  });
+}
+
+/** Which shift applies to someone (own, department's or company's) and their check-in rules. */
+export function useWorkingHours(id: string | undefined) {
+  return useQuery({
+    queryKey: [...userKeys.all, "working-hours", id ?? ""],
+    queryFn: () => apiClient.get<WorkingHours>(`/users/${id}/working-hours`),
+    enabled: !!id,
   });
 }
 

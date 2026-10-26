@@ -61,11 +61,13 @@ export function CheckInBar() {
             icon="log-in-outline"
             loading={checkIn.isPending}
             disabled={pending}
-            onPress={() => checkIn.mutate(undefined, { onError: onError("Couldn't check in") })}
+            onPress={() =>
+              checkIn.mutate({ locationRequired: data.rules?.locationRequired ?? true }, { onError: onError("Couldn't check in") })
+            }
             style={styles.button}
           />
         )}
-        {status === "working" && (
+        {status === "working" && (data.rules?.breaks ?? true) && (
           <Button
             title="Start break"
             variant="secondary"

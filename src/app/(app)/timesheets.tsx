@@ -130,7 +130,7 @@ function AttendanceTab() {
                 <AppText weight="600">{row.user.name}</AppText>
                 {row.shift.custom && (
                   <AppText variant="small" muted>
-                    Own shift: {formatShift(row.shift)}
+                    {row.shift.source === "department" ? "Department shift" : "Own shift"}: {formatShift(row.shift)}
                   </AppText>
                 )}
               </Pressable>

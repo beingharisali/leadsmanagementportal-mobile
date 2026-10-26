@@ -10,7 +10,7 @@ import type { CheckInBoard, CheckInLocation, MyCheckIn } from "./types";
 /** Same endpoints as the website (server/src/modules/check-ins). */
 const checkInsApi = {
   me: () => apiClient.get<MyCheckIn>("/check-ins/me"),
-  checkIn: (location: CheckInLocation) => apiClient.post<MyCheckIn>("/check-ins/check-in", { location, source: "mobile" }),
+  checkIn: (location: CheckInLocation | null) => apiClient.post<MyCheckIn>("/check-ins/check-in", { location, source: "mobile" }),
   startBreak: () => apiClient.post<MyCheckIn>("/check-ins/breaks/start"),
   endBreak: () => apiClient.post<MyCheckIn>("/check-ins/breaks/end"),
   checkOut: (location: CheckInLocation | null) => apiClient.post<MyCheckIn>("/check-ins/check-out", { location }),
@@ -69,8 +69,14 @@ function useCheckInMutation<TVars>(mutationFn: (vars: TVars) => Promise<MyCheckI
   });
 }
 
-/** Checking in needs the location; without it there's no check-in. */
-export const useCheckIn = () => useCheckInMutation(async () => checkInsApi.checkIn(await currentLocation()));
+/**
+ * Checking in needs the location; without it there's no check-in, unless the
+ * person's rules make the location optional.
+ */
+export const useCheckIn = () =>
+  useCheckInMutation(async ({ locationRequired }: { locationRequired: boolean }) =>
+    checkInsApi.checkIn(locationRequired ? await currentLocation() : await currentLocation().catch(() => null)),
+  );
 export const useStartBreak = () => useCheckInMutation(() => checkInsApi.startBreak());
 export const useEndBreak = () => useCheckInMutation(() => checkInsApi.endBreak());
 /** Checking out records the location when the phone gives it, but never waits on it. */

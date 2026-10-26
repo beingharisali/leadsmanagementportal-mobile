@@ -1,4 +1,4 @@
-import type { UserRole } from "@/features/users/types";
+import type { UserRole, UserShift } from "@/features/users/types";
 
 /** Mirrors the API (server/src/modules/departments). */
 export interface Department {
@@ -8,6 +8,8 @@ export interface Department {
   /** Built-in: "general" (General Team) or "sales"; they can't be renamed or deleted */
   kind: "general" | "sales" | null;
   head: { id: string; name: string; email: string; role: UserRole; isActive: boolean } | null;
+  /** Working hours for its people who don't have their own; empty means the company's shift */
+  shift?: UserShift | null;
   memberCount: number;
   createdAt: string;
   updatedAt: string;
@@ -29,6 +31,7 @@ export interface DepartmentPayload {
   name: string;
   description?: string | null;
   head?: string | null;
+  shift?: UserShift | null;
 }
 
 /** Someone who can be moved between departments; `canHead` for active admins and members. */
