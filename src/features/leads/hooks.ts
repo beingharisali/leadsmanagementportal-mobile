@@ -187,6 +187,16 @@ export function useDeleteLead() {
 }
 
 /** Managers: move several leads to the recycle bin at once. */
+/** Moves every lead in one pipeline stage (narrowed by the pipeline's filters) to the recycle bin. */
+export function useDeleteLeadsByStatus() {
+  const refresh = useRefreshLead();
+  return useMutation({
+    mutationFn: (body: { status: string; assignedTo?: string; assignedFrom?: string; assignedUntil?: string }) =>
+      apiClient.post<{ deleted: number }>("/leads/delete-by-status", body),
+    onSuccess: () => refresh(),
+  });
+}
+
 export function useBulkDeleteLeads() {
   const refresh = useRefreshLead();
   return useMutation({
