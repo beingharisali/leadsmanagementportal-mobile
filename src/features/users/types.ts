@@ -58,8 +58,10 @@ export interface User {
   support?: { sessionId: string; staffName: string; startedAt: string; expiresAt: string };
   /** Only on the signed-in user (`/auth/me`) */
   organization?: OrganizationSummary;
-  /** Their own working hours instead of the company's shift */
+  /** Their own working hours instead of their department's or the company's shift */
   shift?: UserShift | null;
+  /** How they check in; empty means the usual rules */
+  checkInRules?: CheckInRules | null;
   lastLoginAt?: string;
   createdAt: string;
   updatedAt: string;
@@ -71,6 +73,39 @@ export interface User {
  */
 export const ASSIGNABLE_ROLES = ["admin", "agent", "member"] as const satisfies readonly UserRole[];
 export type AssignableRole = (typeof ASSIGNABLE_ROLES)[number];
+
+/** How one person checks in (see server check-ins/check-in.rules.ts). */
+export interface CheckInRules {
+  /** Off: they don't check in; their days are measured from sign-ins */
+  required: boolean;
+  /** Off: checking in works without the location */
+  locationRequired: boolean;
+  /** Off: nobody is told when they're late or haven't checked in */
+  alerts: boolean;
+  /** Off: no breaks */
+  breaks: boolean;
+  /** Checking in up to this many minutes late still counts as on time */
+  graceMinutes: number;
+}
+
+export const DEFAULT_CHECK_IN_RULES: CheckInRules = {
+  required: true,
+  locationRequired: true,
+  alerts: true,
+  breaks: true,
+  graceMinutes: 0,
+};
+
+/** `GET /users/:id/working-hours`: which shift applies to them and how they check in. */
+export interface WorkingHours {
+  own: UserShift | null;
+  department: { id: string; name: string; shift: UserShift | null } | null;
+  company: UserShift;
+  effective: UserShift & { source: "own" | "department" | "company" };
+  checkInRules: CheckInRules;
+  /** False for the owner */
+  canCheckIn: boolean;
+}
 
 export interface UserShift {
   /** "HH:MM" */

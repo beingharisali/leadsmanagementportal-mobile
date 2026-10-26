@@ -35,7 +35,17 @@ export interface MyCheckIn {
   required: boolean;
   day?: string;
   timeZone?: string;
-  shift?: { start: string; end: string; isWorkDay: boolean; startAt: string; endAt: string };
+  shift?: {
+    start: string;
+    end: string;
+    /** Whose hours these are: the person's own, their department's or the company's */
+    source?: "own" | "department" | "company";
+    isWorkDay: boolean;
+    startAt: string;
+    endAt: string;
+  };
+  /** How this person checks in */
+  rules?: { locationRequired: boolean; breaks: boolean; graceMinutes: number };
   status: CheckInStatus | null;
   record: CheckInRecord | null;
 }

@@ -162,7 +162,7 @@ export interface AttendanceDay {
 
 export interface AttendanceRow {
   user: { id: string; name: string; isActive: boolean };
-  shift: Shift & { custom: boolean };
+  shift: Shift & { custom: boolean; source?: "own" | "department" | "company" };
   days: AttendanceDay[];
   summary: { workDays: number; present: number; late: number; absent: number; leftEarly: number; daysOff: number };
 }
