@@ -7,6 +7,12 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/2abbf344-b878-40e8-a0ac-f70976dcd65b"
+    },
     "ios": {
       "bundleIdentifier": "com.heapware.getclosewise",
       "supportsTablet": true
