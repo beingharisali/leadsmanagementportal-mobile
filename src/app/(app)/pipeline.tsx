@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/ui/app-text";
 import { Button } from "@/components/ui/button";
@@ -18,11 +18,13 @@ import {
   type AssignedFilter,
 } from "@/features/leads/components/assigned-date-filter";
 import { LeadRow } from "@/features/leads/components/lead-row";
-import { useLeads, useLeadStats } from "@/features/leads/hooks";
+import { useDeleteLeadsByStatus, useLeads, useLeadStats } from "@/features/leads/hooks";
 import type { Lead } from "@/features/leads/types";
+import { useCanEdit } from "@/features/organizations/hooks";
 import { UNASSIGNED, UserPickerSheet } from "@/features/users/components/user-picker-sheet";
 import { useAssignableUsers } from "@/features/users/hooks";
 import { isManagerRole } from "@/features/users/types";
+import { getErrorMessage } from "@/lib/api-client";
 import { flattenPages } from "@/lib/infinite";
 import { formatCurrency } from "@/lib/format";
 import { accentColor, withAlpha } from "@/theme/accents";
@@ -64,6 +66,42 @@ export default function PipelineScreen() {
   const statFor = (key: string) => stats.data?.byStatus.find((s) => s.status === key);
   const current = statFor(stage);
   const filteredTotal = leads.data?.pages[0]?.meta.total;
+  const canEdit = useCanEdit();
+  const deleteByStatus = useDeleteLeadsByStatus();
+  const stageLabel = stages.find((s) => s.key === stage)?.label ?? stage;
+
+  function deleteStage() {
+    const count = filteredTotal ?? 0;
+    if (count === 0) return;
+    Alert.alert(
+      `Delete all ${count} lead${count === 1 ? "" : "s"} in ${stageLabel}?`,
+      `${filtered ? "Only the leads matching your filters (agent and assigned date) are deleted. " : ""}They will be moved to the recycle bin, where you can restore them.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Move to bin",
+          style: "destructive",
+          onPress: () =>
+            deleteByStatus.mutate(
+              {
+                status: stage,
+                assignedTo: params.assignedTo,
+                assignedFrom: params.assignedFrom,
+                assignedUntil: params.assignedUntil,
+              },
+              {
+                onSuccess: (result) =>
+                  Alert.alert(
+                    "Leads deleted",
+                    `${result.deleted} lead${result.deleted === 1 ? "" : "s"} moved to the recycle bin.`,
+                  ),
+                onError: (error) => Alert.alert("Couldn't delete the leads", getErrorMessage(error)),
+              },
+            ),
+        },
+      ],
+    );
+  }
 
   const renderItem = useCallback(
     ({ item }: { item: Lead }) => <LeadRow lead={item} showAssignee={manager} showAssignedAt />,
@@ -149,6 +187,15 @@ export default function PipelineScreen() {
               <AppText variant="small" muted>
                 {current.count} lead{current.count === 1 ? "" : "s"} · {formatCurrency(current.budget)} total budget
               </AppText>
+            )}
+            {manager && canEdit && (filteredTotal ?? 0) > 0 && (
+              <Button
+                title={`Delete all in ${stageLabel}`}
+                icon="trash-outline"
+                variant="secondary"
+                loading={deleteByStatus.isPending}
+                onPress={deleteStage}
+              />
             )}
           </>
         }
