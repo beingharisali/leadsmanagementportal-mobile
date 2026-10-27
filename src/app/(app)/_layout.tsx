@@ -19,6 +19,7 @@ export default function AppLayout() {
       <Stack screenOptions={{ headerBackButtonDisplayMode: "minimal", headerShadowVisible: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="account" options={{ title: "My account" }} />
+        <Stack.Screen name="search" options={{ title: "Search" }} />
         <Stack.Screen name="soon" />
         <Stack.Screen name="leads/[id]/index" options={{ title: "" }} />
         <Stack.Screen name="leads/[id]/edit" options={{ title: "Edit lead" }} />

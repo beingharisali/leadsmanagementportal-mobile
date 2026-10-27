@@ -9,9 +9,10 @@ interface SearchFieldProps {
   value: string;
   onChangeText: (value: string) => void;
   placeholder: string;
+  autoFocus?: boolean;
 }
 
-export function SearchField({ value, onChangeText, placeholder }: SearchFieldProps) {
+export function SearchField({ value, onChangeText, placeholder, autoFocus }: SearchFieldProps) {
   const { colors } = useTheme();
   return (
     <View style={[styles.box, { backgroundColor: colors.input, borderColor: colors.border }]}>
@@ -26,6 +27,7 @@ export function SearchField({ value, onChangeText, placeholder }: SearchFieldPro
         placeholderTextColor={colors.mutedText}
         style={[styles.input, { color: colors.text }]}
         returnKeyType="search"
+        autoFocus={autoFocus}
         autoCorrect={false}
         clearButtonMode="never"
         accessibilityLabel={placeholder}

@@ -1,3 +1,4 @@
+import { useLocalSearchParams } from "expo-router";
 import { useCallback, useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 
@@ -33,8 +34,11 @@ function StatusBadge({ invoice }: { invoice: PlatformInvoice }) {
 
 /** Heapware staff: every company's invoices; cancel ones that shouldn't be paid. */
 export default function InvoicesScreen() {
-  const [filter, setFilter] = useState<Filter>("open");
-  const invoices = usePlatformInvoices(FILTERS[filter].params);
+  // Opened from the search screen: that invoice, whatever its status.
+  const link = useLocalSearchParams<{ search?: string }>();
+  const [search, setSearch] = useState(link.search ?? "");
+  const [filter, setFilter] = useState<Filter>(link.search ? "all" : "open");
+  const invoices = usePlatformInvoices({ ...FILTERS[filter].params, search: search || undefined });
   const voidInvoice = useVoidInvoice();
 
   const confirmVoid = useCallback(
@@ -91,6 +95,7 @@ export default function InvoicesScreen() {
               <Chip key={key} label={FILTERS[key].label} selected={filter === key} onPress={() => setFilter(key)} />
             ))}
           </View>
+          {search ? <Chip icon="close" label={`Invoice ${search}`} selected onPress={() => setSearch("")} /> : null}
         </>
       }
       empty={<EmptyView icon="document-text-outline" title="No invoices here" />}

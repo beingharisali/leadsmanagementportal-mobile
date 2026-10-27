@@ -349,11 +349,12 @@ export function useUpdateBillingSettings() {
   });
 }
 
-export function usePlatformPayments(status: PaymentStatus) {
+/** `search`: a payment reference (from the search screen). */
+export function usePlatformPayments(status: PaymentStatus, search?: string) {
   return useInfiniteQuery({
-    queryKey: [...platformKeys.all, "payments", status],
+    queryKey: [...platformKeys.all, "payments", status, search],
     queryFn: ({ pageParam }) =>
-      apiClient.getPaginated<PlatformPayment>("/platform/billing/payments", { status, page: pageParam, limit: 20 }),
+      apiClient.getPaginated<PlatformPayment>("/platform/billing/payments", { status, search, page: pageParam, limit: 20 }),
     initialPageParam: 1,
     getNextPageParam: (last: Paginated<PlatformPayment>) => nextPage(last),
   });
@@ -386,6 +387,8 @@ export function useRejectPayment() {
 }
 
 export interface InvoiceFilter {
+  /** Invoice number (from the search screen) */
+  search?: string;
   status?: InvoiceStatus;
   overdue?: boolean;
   organizationId?: string;
