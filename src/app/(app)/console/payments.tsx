@@ -1,9 +1,11 @@
+import { useLocalSearchParams } from "expo-router";
 import { useCallback, useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/ui/app-text";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 import { InfiniteList } from "@/components/ui/infinite-list";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Sheet, useOpenKey } from "@/components/ui/sheet";
@@ -35,8 +37,11 @@ const invoiceOf = (payment: PlatformPayment) => (typeof payment.invoice === "str
 
 /** Heapware staff: receipts customers uploaded. Approving pays the invoice and switches the company's plan. */
 export default function PaymentsScreen() {
-  const [status, setStatus] = useState<PaymentStatus>("pending");
-  const payments = usePlatformPayments(status);
+  // Opened from the search screen: that payment, on its own status's tab.
+  const link = useLocalSearchParams<{ search?: string; status?: string }>();
+  const [search, setSearch] = useState(link.search ?? "");
+  const [status, setStatus] = useState<PaymentStatus>(TABS.find((t) => t.value === link.status)?.value ?? "pending");
+  const payments = usePlatformPayments(status, search || undefined);
   const approve = useApprovePayment();
   const [rejecting, setRejecting] = useState<PlatformPayment | null>(null);
 
@@ -85,7 +90,12 @@ export default function PaymentsScreen() {
         hasNextPage={payments.hasNextPage}
         isFetchingNextPage={payments.isFetchingNextPage}
         fetchNextPage={() => void payments.fetchNextPage()}
-        header={<SegmentedControl segments={TABS} value={status} onChange={setStatus} />}
+        header={
+          <>
+            <SegmentedControl segments={TABS} value={status} onChange={setStatus} />
+            {search ? <Chip icon="close" label={`Reference ${search}`} selected onPress={() => setSearch("")} /> : null}
+          </>
+        }
         empty={
           <EmptyView
             icon="receipt-outline"

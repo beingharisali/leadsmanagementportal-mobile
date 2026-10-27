@@ -1,8 +1,10 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { router } from "expo-router";
 import { Tabs } from "expo-router/js-tabs";
 import type { ComponentProps } from "react";
 import type { ColorValue } from "react-native";
 
+import { HeaderButton } from "@/components/ui/header-button";
 import { useCurrentUser } from "@/features/auth/auth-provider";
 import { useUnreadCount } from "@/features/notifications/hooks";
 import { worksLeads } from "@/features/users/types";
@@ -29,6 +31,8 @@ export default function TabsLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedText,
         headerShadowVisible: false,
+        // Search the whole app from every tab.
+        headerLeft: () => <HeaderButton label="Search" icon="search" onPress={() => router.push("/search")} />,
       }}
     >
       <Tabs.Screen name="index" options={{ title: "Home", tabBarIcon: icon("home-outline") }} />
