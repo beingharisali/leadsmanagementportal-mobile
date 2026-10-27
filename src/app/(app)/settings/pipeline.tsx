@@ -18,8 +18,8 @@ export default function PipelineSettingsScreen() {
       <Card>
         <AppText variant="heading">Daily reset</AppText>
         <AppText variant="small" muted>
-          Send leads back to an earlier stage the next day (for example Not picked back to New), so agents see them again
-          and call once more.
+          Move leads on automatically the next day: for example Not picked back to New so agents call again, or Not
+          Interested to Lost.
         </AppText>
         <StageResetForm />
       </Card>

@@ -115,7 +115,7 @@ function LeadDetail({ lead, onRefresh }: { lead: Lead; onRefresh: () => Promise<
       ],
     );
   }
-  const { stageLabel, sourceLabel, customFields } = useLeadOptions();
+  const { stageLabel, sourceLabel, customFields, needsLostReason } = useLeadOptions();
   const activities = useLeadActivities(lead.id);
   const followUps = useFollowUps({ leadId: lead.id, status: "pending", limit: 20 });
   const followUpActions = useFollowUpActions();
@@ -208,8 +208,8 @@ function LeadDetail({ lead, onRefresh }: { lead: Lead; onRefresh: () => Promise<
         <QuickAction icon="create" label="Log call" onPress={() => setCallSheet({})} disabled={!canEdit} />
       </View>
 
-      {lead.status === LOST_STAGE && lead.lostReason && (
-        <Banner tone="danger" title={`${stageLabel(LOST_STAGE)} reason`} message={lead.lostReason} />
+      {lead.lostReason && (lead.status === LOST_STAGE || needsLostReason(lead.status)) && (
+        <Banner tone="danger" title={`${stageLabel(lead.status)} reason`} message={lead.lostReason} />
       )}
 
       <Card>

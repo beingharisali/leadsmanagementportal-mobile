@@ -5,6 +5,7 @@ import { apiClient } from "@/lib/api-client";
 
 import {
   DEFAULT_SETTINGS,
+  LOST_STAGE,
   type ColorName,
   type CustomFieldDefinition,
   type CustomFieldType,
@@ -51,6 +52,11 @@ export function useLeadOptions() {
     (key: string) => settings.customFields.find((f) => f.key === key),
     [settings],
   );
+  /** Lost, and any stage a daily rule closes as Lost the next day: moving there asks for a reason. */
+  const needsLostReason = useCallback(
+    (key: string) => key === LOST_STAGE || settings.stageResets.some((r) => r.from === key && r.to === LOST_STAGE),
+    [settings],
+  );
 
   return useMemo(
     () => ({
@@ -65,8 +71,9 @@ export function useLeadOptions() {
       stageColor,
       sourceLabel,
       customField,
+      needsLostReason,
     }),
-    [settings, stageLabel, stageColor, sourceLabel, customField],
+    [settings, stageLabel, stageColor, sourceLabel, customField, needsLostReason],
   );
 }
 
@@ -120,8 +127,8 @@ export const useUpdatePipeline = () =>
     apiClient.put<WorkspaceSettings>("/settings/pipeline", payload),
   );
 
-export const useUpdateStageReset = () =>
-  useSaveSettings((stageReset: StageReset | null) => apiClient.put<WorkspaceSettings>("/settings/stage-reset", { stageReset }));
+export const useUpdateStageResets = () =>
+  useSaveSettings((stageResets: StageReset[]) => apiClient.put<WorkspaceSettings>("/settings/stage-resets", { stageResets }));
 
 export const useUpdateSources = () =>
   useSaveSettings((payload: { sources: { key?: string; label: string }[]; moveLeads?: MoveLeads }) =>
