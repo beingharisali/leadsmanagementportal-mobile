@@ -37,9 +37,10 @@ export function MoveStageSheet(props: MoveStageSheetProps) {
 
 function MoveStageSheetBody({ open, onClose, from, count, filters, filtered }: MoveStageSheetProps) {
   const { scheme } = useTheme();
-  const { stages, stageLabel, lostReasons } = useLeadOptions();
+  const { stages, stageLabel, lostReasons, needsLostReason } = useLeadOptions();
   const mutation = useMoveLeadsByStatus();
-  const [askingReason, setAskingReason] = useState(false);
+  /** The stage waiting for a reason */
+  const [askingReason, setAskingReason] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const noun = `lead${count === 1 ? "" : "s"}`;
 
@@ -63,7 +64,7 @@ function MoveStageSheetBody({ open, onClose, from, count, filters, filtered }: M
 
   function select(to: string) {
     if (to === from) return;
-    if (to === LOST_STAGE) return setAskingReason(true);
+    if (needsLostReason(to)) return setAskingReason(to);
     Alert.alert(
       `Move ${count} ${noun} to ${stageLabel(to)}?`,
       `${filtered ? "Only the leads matching your filters (agent and assigned date) move. " : ""}Every lead in ${stageLabel(from)} goes to ${stageLabel(to)}.`,
@@ -75,19 +76,27 @@ function MoveStageSheetBody({ open, onClose, from, count, filters, filtered }: M
   }
 
   if (askingReason) {
+    const toLost = askingReason === LOST_STAGE;
+    const action = toLost
+      ? `Mark ${count} ${noun} as ${stageLabel(LOST_STAGE)}`
+      : `Move ${count} ${noun} to ${stageLabel(askingReason)}`;
     return (
       <Sheet
         open={open}
         onClose={onClose}
-        title={`Mark ${count} ${noun} as ${stageLabel(LOST_STAGE)}`}
-        subtitle={`Why were they lost? The reason is saved on every lead moved from ${stageLabel(from)}.`}
+        title={action}
+        subtitle={
+          toLost
+            ? `Why were they lost? The reason is saved on every lead moved from ${stageLabel(from)}.`
+            : `Why aren't they interested? The reason is saved on every lead; tomorrow they move to ${stageLabel(LOST_STAGE)}.`
+        }
         footer={
           <Button
-            title={`Mark ${count} ${noun} as ${stageLabel(LOST_STAGE)}`}
+            title={action}
             variant="danger"
             loading={mutation.isPending}
             disabled={reason.trim().length < 3}
-            onPress={() => submit(LOST_STAGE, reason.trim())}
+            onPress={() => submit(askingReason, reason.trim())}
           />
         }
       >

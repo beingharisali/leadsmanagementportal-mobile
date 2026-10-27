@@ -111,7 +111,7 @@ export function featuresFor(user: User, work: WorkAccessFlags | undefined): Feat
       ...pipeline,
       title: "Daily reset",
       icon: "refresh-outline",
-      keywords: "not picked not pick no answer next day midnight back to new stage automatic pipeline",
+      keywords: "not picked not pick not interested lost no answer next day midnight back to new stage automatic rules pipeline",
     });
   }
 

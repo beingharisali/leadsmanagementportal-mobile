@@ -29,7 +29,11 @@ export interface PipelineStage {
   color: ColorName;
 }
 
-/** Leads left in `from` go back to `to` at midnight the next day, e.g. "Not picked" → "New". */
+/**
+ * Leads left in `from` move to `to` at midnight the next day, e.g. "Not picked"
+ * → "New" or "Not Interested" → Lost. Into Lost, the lead needs a lost reason
+ * when it enters `from`.
+ */
 export interface StageReset {
   from: string;
   to: string;
@@ -127,8 +131,8 @@ export interface TeamSettings {
 
 export interface WorkspaceSettings {
   pipelineStages: PipelineStage[];
-  /** null = off */
-  stageReset: StageReset | null;
+  /** The daily moves; empty = none */
+  stageResets: StageReset[];
   leadSources: LeadSourceOption[];
   lostReasons: string[];
   tags: TagOption[];
@@ -145,13 +149,14 @@ export const DEFAULT_SETTINGS: WorkspaceSettings = {
     { key: "owner_details", label: "Owner Details", color: "fuchsia" },
     { key: "call_with_owner", label: "Call with Owner", color: "teal" },
     { key: "interested", label: "Interested", color: "cyan" },
+    { key: "not_interested", label: "Not Interested", color: "slate" },
     { key: "meeting", label: "Meeting", color: "indigo" },
     { key: "proposal", label: "Proposal", color: "amber" },
     { key: "negotiation", label: "Negotiation", color: "orange" },
     { key: WON_STAGE, label: "Won", color: "emerald" },
     { key: LOST_STAGE, label: "Lost", color: "rose" },
   ],
-  stageReset: null,
+  stageResets: [{ from: "not_interested", to: LOST_STAGE }],
   leadSources: [
     { key: "facebook", label: "Facebook" },
     { key: "instagram", label: "Instagram" },

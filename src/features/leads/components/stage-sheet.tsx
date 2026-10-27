@@ -23,16 +23,20 @@ interface StageSheetProps {
   onClose: () => void;
 }
 
-/** Move a lead to another stage. "Lost" asks for a reason first, like the website. */
+/**
+ * Move a lead to another stage. Lost, and a stage that closes as Lost the next
+ * day (e.g. "Not Interested"), ask for a reason first, like the website.
+ */
 export function StageSheet(props: StageSheetProps) {
   return <StageSheetBody key={useOpenKey(props.open)} {...props} />;
 }
 
 function StageSheetBody({ lead, open, onClose }: StageSheetProps) {
   const { scheme } = useTheme();
-  const { stages, stageLabel, lostReasons } = useLeadOptions();
+  const { stages, stageLabel, lostReasons, needsLostReason } = useLeadOptions();
   const mutation = useChangeLeadStatus(lead.id);
-  const [askingReason, setAskingReason] = useState(false);
+  /** The stage waiting for a reason */
+  const [askingReason, setAskingReason] = useState<string | null>(null);
   const [reason, setReason] = useState("");
 
   function submit(status: string, lostReason?: string) {
@@ -49,24 +53,30 @@ function StageSheetBody({ lead, open, onClose }: StageSheetProps) {
 
   function select(status: string) {
     if (status === lead.status) return onClose();
-    if (status === LOST_STAGE) setAskingReason(true);
+    if (needsLostReason(status)) setAskingReason(status);
     else submit(status);
   }
 
   if (askingReason) {
+    const toLost = askingReason === LOST_STAGE;
+    const action = toLost ? `Mark as ${stageLabel(LOST_STAGE)}` : `Move to ${stageLabel(askingReason)}`;
     return (
       <Sheet
         open={open}
         onClose={onClose}
-        title={`Mark as ${stageLabel(LOST_STAGE)}`}
-        subtitle={`Why was ${lead.businessName} lost? This helps the team see what to improve.`}
+        title={action}
+        subtitle={
+          toLost
+            ? `Why was ${lead.businessName} lost? This helps the team see what to improve.`
+            : `Why isn't ${lead.businessName} interested? Tomorrow the lead moves to ${stageLabel(LOST_STAGE)} with this reason.`
+        }
         footer={
           <Button
-            title={`Mark as ${stageLabel(LOST_STAGE)}`}
+            title={action}
             variant="danger"
             loading={mutation.isPending}
             disabled={reason.trim().length < 3}
-            onPress={() => submit(LOST_STAGE, reason.trim())}
+            onPress={() => submit(askingReason, reason.trim())}
           />
         }
       >
