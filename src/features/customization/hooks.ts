@@ -10,6 +10,7 @@ import {
   type CustomFieldType,
   type CustomFieldValue,
   type SettingsUsage,
+  type StageReset,
   type TagOption,
   type TeamSettings,
   type TrackingSettings,
@@ -118,6 +119,9 @@ export const useUpdatePipeline = () =>
   useSaveSettings((payload: { stages: { key?: string; label: string; color: ColorName }[]; moveLeads?: MoveLeads }) =>
     apiClient.put<WorkspaceSettings>("/settings/pipeline", payload),
   );
+
+export const useUpdateStageReset = () =>
+  useSaveSettings((stageReset: StageReset | null) => apiClient.put<WorkspaceSettings>("/settings/stage-reset", { stageReset }));
 
 export const useUpdateSources = () =>
   useSaveSettings((payload: { sources: { key?: string; label: string }[]; moveLeads?: MoveLeads }) =>

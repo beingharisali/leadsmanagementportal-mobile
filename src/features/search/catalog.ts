@@ -104,6 +104,17 @@ export function featuresFor(user: User, work: WorkAccessFlags | undefined): Feat
     for (const item of section.items) results.push(...toResult(section.label, item, isLocked(item.feature)));
   }
 
+  // The daily reset lives on the pipeline screen; its own result so "not picked" finds it by name.
+  const pipeline = results.find((r) => r.href === "/settings/pipeline");
+  if (pipeline) {
+    results.push({
+      ...pipeline,
+      title: "Daily reset",
+      icon: "refresh-outline",
+      keywords: "not picked not pick no answer next day midnight back to new stage automatic pipeline",
+    });
+  }
+
   // Without work management, the owner still finds the work screens, locked (an upgrade hint).
   if (user.role === "owner" && features && !features.includes("workManagement")) {
     const all = moreSectionsFor(user, { tasks: true, departments: true, taskReports: true });
