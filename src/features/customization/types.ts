@@ -29,6 +29,12 @@ export interface PipelineStage {
   color: ColorName;
 }
 
+/** Leads left in `from` go back to `to` at midnight the next day, e.g. "Not picked" → "New". */
+export interface StageReset {
+  from: string;
+  to: string;
+}
+
 export interface LeadSourceOption {
   key: string;
   label: string;
@@ -121,6 +127,8 @@ export interface TeamSettings {
 
 export interface WorkspaceSettings {
   pipelineStages: PipelineStage[];
+  /** null = off */
+  stageReset: StageReset | null;
   leadSources: LeadSourceOption[];
   lostReasons: string[];
   tags: TagOption[];
@@ -143,6 +151,7 @@ export const DEFAULT_SETTINGS: WorkspaceSettings = {
     { key: WON_STAGE, label: "Won", color: "emerald" },
     { key: LOST_STAGE, label: "Lost", color: "rose" },
   ],
+  stageReset: null,
   leadSources: [
     { key: "facebook", label: "Facebook" },
     { key: "instagram", label: "Instagram" },
