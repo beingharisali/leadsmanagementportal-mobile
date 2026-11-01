@@ -45,7 +45,7 @@ import { useCanEdit } from "@/features/organizations/hooks";
 import { isManagerRole } from "@/features/users/types";
 import { ApiClientError, getErrorMessage } from "@/lib/api-client";
 import { flattenPages } from "@/lib/infinite";
-import { formatCurrency, formatDate, formatTimeAgo, telUrl } from "@/lib/format";
+import { formatCurrency, formatDate, formatDateTime, formatTimeAgo, telUrl } from "@/lib/format";
 import { useNow } from "@/lib/use-now";
 import { radius, spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
@@ -268,6 +268,13 @@ function LeadDetail({ lead, onRefresh }: { lead: Lead; onRefresh: () => Promise<
           label="Added"
           value={`${formatDate(lead.createdAt)}${lead.createdBy ? ` by ${lead.createdBy.name}` : ""}`}
         />
+        {lead.upload && (
+          <Detail
+            icon="document-text-outline"
+            label="Imported from"
+            value={`${lead.upload.fileName} · uploaded ${formatDateTime(lead.upload.createdAt)}`}
+          />
+        )}
         {customFields.map((field) => (
           <Detail
             key={field.key}

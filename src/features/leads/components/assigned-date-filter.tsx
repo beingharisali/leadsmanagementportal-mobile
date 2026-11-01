@@ -83,56 +83,79 @@ export function AssignedDateSection({
   value: AssignedFilter;
   onChange: (value: AssignedFilter) => void;
 }) {
+  return (
+    <DatePresetSection
+      title="Assigned date"
+      preset={value.assigned}
+      from={value.assignedFrom}
+      until={value.assignedUntil}
+      onChange={({ preset, from, until }) =>
+        onChange({ assigned: preset, assignedFrom: from, assignedUntil: until })
+      }
+    />
+  );
+}
+
+/** The days a preset covers, for the API. `today` is the company's today. */
+export function presetRange(
+  preset: AssignedPreset | "",
+  from: string,
+  until: string,
+  today: string,
+): { from?: string; until?: string } {
+  const range = assignedRangeFor({ assigned: preset, assignedFrom: from, assignedUntil: until }, today);
+  return { from: range.assignedFrom, until: range.assignedUntil };
+}
+
+/** A date filter: preset chips (tap again for any date) and from–to pickers for "Pick dates". */
+export function DatePresetSection({
+  title,
+  preset,
+  from,
+  until,
+  onChange,
+}: {
+  title: string;
+  preset: AssignedPreset | "";
+  from: string;
+  until: string;
+  onChange: (value: { preset: AssignedPreset | ""; from: string; until: string }) => void;
+}) {
   const today = useCompanyToday();
 
-  function pick(preset: AssignedPreset) {
-    if (value.assigned === preset) onChange(NO_ASSIGNED);
+  function pick(next: AssignedPreset) {
+    if (preset === next) onChange({ preset: "", from: "", until: "" });
     // A new custom range starts as today, so the list doesn't jump to "everything"
-    else if (preset === "custom")
-      onChange({ assigned: preset, assignedFrom: today, assignedUntil: today });
-    else onChange({ assigned: preset, assignedFrom: "", assignedUntil: "" });
+    else if (next === "custom") onChange({ preset: next, from: today, until: today });
+    else onChange({ preset: next, from: "", until: "" });
   }
 
   return (
     <View style={styles.section}>
-      <AppText variant="label">Assigned date</AppText>
+      <AppText variant="label">{title}</AppText>
       <View style={styles.chips}>
-        {(Object.keys(assignedLabels) as AssignedPreset[]).map((preset) => (
-          <Chip
-            key={preset}
-            label={assignedLabels[preset]}
-            selected={value.assigned === preset}
-            onPress={() => pick(preset)}
-          />
+        {(Object.keys(assignedLabels) as AssignedPreset[]).map((key) => (
+          <Chip key={key} label={assignedLabels[key]} selected={preset === key} onPress={() => pick(key)} />
         ))}
       </View>
-      {value.assigned === "custom" && (
+      {preset === "custom" && (
         <>
           <DateTimeField
             label="From"
             mode="date"
-            value={value.assignedFrom ? toDate(value.assignedFrom) : null}
+            value={from ? toDate(from) : null}
             onChange={(date) => {
               const day = toDay(date);
               // Keeps the range the right way round
-              onChange({
-                ...value,
-                assignedFrom: day,
-                assignedUntil:
-                  value.assignedUntil < day ? day : value.assignedUntil,
-              });
+              onChange({ preset, from: day, until: until < day ? day : until });
             }}
           />
           <DateTimeField
             label="To"
             mode="date"
-            value={value.assignedUntil ? toDate(value.assignedUntil) : null}
-            minimumDate={
-              value.assignedFrom ? toDate(value.assignedFrom) : undefined
-            }
-            onChange={(date) =>
-              onChange({ ...value, assignedUntil: toDay(date) })
-            }
+            value={until ? toDate(until) : null}
+            minimumDate={from ? toDate(from) : undefined}
+            onChange={(date) => onChange({ preset, from, until: toDay(date) })}
           />
         </>
       )}

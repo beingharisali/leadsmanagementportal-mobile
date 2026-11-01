@@ -17,6 +17,13 @@ import {
   useCompanyToday,
   type AssignedFilter,
 } from "@/features/leads/components/assigned-date-filter";
+import {
+  CityUploadSections,
+  NO_CITY_UPLOAD,
+  cityUploadParams,
+  countCityUpload,
+  type CityUploadFilter,
+} from "@/features/leads/components/city-upload-filter";
 import { LeadRow } from "@/features/leads/components/lead-row";
 import { MoveStageSheet } from "@/features/leads/components/move-stage-sheet";
 import { useDeleteLeadsByStatus, useLeads, useLeadStats } from "@/features/leads/hooks";
@@ -49,10 +56,13 @@ export default function PipelineScreen() {
   const [assigned, setAssigned] = useState<AssignedFilter>(NO_ASSIGNED);
   const [pickingAgent, setPickingAgent] = useState(false);
   const [pickingDate, setPickingDate] = useState(false);
+  const [cityUpload, setCityUpload] = useState<CityUploadFilter>(NO_CITY_UPLOAD);
+  const [pickingCityUpload, setPickingCityUpload] = useState(false);
+  const cityUploadCount = countCityUpload(cityUpload);
   const users = useAssignableUsers(manager);
   const today = useCompanyToday();
   const agent = users.data?.find((u) => u.id === agentScope);
-  const filtered = agentScope !== "all" || assigned.assigned !== "";
+  const filtered = agentScope !== "all" || assigned.assigned !== "" || cityUploadCount > 0;
 
   const params = useMemo(
     () => ({
@@ -60,9 +70,20 @@ export default function PipelineScreen() {
       sort: "-updatedAt" as const,
       assignedTo: manager && agentScope !== "all" ? agentScope : undefined,
       ...assignedRangeFor(assigned, today),
+      ...cityUploadParams(cityUpload, today),
     }),
-    [stage, manager, agentScope, assigned, today],
+    [stage, manager, agentScope, assigned, cityUpload, today],
   );
+  // The whole-stage actions act on exactly the leads shown.
+  const filterBody = {
+    assignedTo: params.assignedTo,
+    assignedFrom: params.assignedFrom,
+    assignedUntil: params.assignedUntil,
+    city: params.city,
+    upload: params.upload,
+    uploadedFrom: params.uploadedFrom,
+    uploadedUntil: params.uploadedUntil,
+  };
   const leads = useLeads(params);
   const statFor = (key: string) => stats.data?.byStatus.find((s) => s.status === key);
   const current = statFor(stage);
@@ -77,7 +98,7 @@ export default function PipelineScreen() {
     if (count === 0) return;
     Alert.alert(
       `Delete all ${count} lead${count === 1 ? "" : "s"} in ${stageLabel}?`,
-      `${filtered ? "Only the leads matching your filters (agent and assigned date) are deleted. " : ""}They will be moved to the recycle bin, where you can restore them.`,
+      `${filtered ? "Only the leads matching your filters are deleted. " : ""}They will be moved to the recycle bin, where you can restore them.`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -85,12 +106,7 @@ export default function PipelineScreen() {
           style: "destructive",
           onPress: () =>
             deleteByStatus.mutate(
-              {
-                status: stage,
-                assignedTo: params.assignedTo,
-                assignedFrom: params.assignedFrom,
-                assignedUntil: params.assignedUntil,
-              },
+              { status: stage, ...filterBody },
               {
                 onSuccess: (result) =>
                   Alert.alert(
@@ -147,6 +163,12 @@ export default function PipelineScreen() {
                 icon="calendar-outline"
                 selected={assigned.assigned !== ""}
                 onPress={() => setPickingDate(true)}
+              />
+              <Chip
+                label={cityUploadCount > 0 ? `City & file (${cityUploadCount})` : "City & file"}
+                icon="options-outline"
+                selected={cityUploadCount > 0}
+                onPress={() => setPickingCityUpload(true)}
               />
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.stages}>
@@ -215,7 +237,7 @@ export default function PipelineScreen() {
         }
         empty={
           filtered ? (
-            <EmptyView icon="search-outline" title="No leads match" message="Try another agent or date, or clear the filters." />
+            <EmptyView icon="search-outline" title="No leads match" message="Try another agent, date, city or file, or clear the filters." />
           ) : (
             <EmptyView icon="git-branch-outline" title="No leads in this stage" />
           )
@@ -238,11 +260,7 @@ export default function PipelineScreen() {
         onClose={() => setMovingStage(false)}
         from={stage}
         count={filteredTotal ?? 0}
-        filters={{
-          assignedTo: params.assignedTo,
-          assignedFrom: params.assignedFrom,
-          assignedUntil: params.assignedUntil,
-        }}
+        filters={filterBody}
         filtered={filtered}
       />
       <Sheet
@@ -259,6 +277,21 @@ export default function PipelineScreen() {
         }
       >
         <AssignedDateSection value={assigned} onChange={setAssigned} />
+      </Sheet>
+      <Sheet
+        open={pickingCityUpload}
+        onClose={() => setPickingCityUpload(false)}
+        title="City and uploaded file"
+        footer={
+          <>
+            <Button title="Done" onPress={() => setPickingCityUpload(false)} />
+            {cityUploadCount > 0 && (
+              <Button title="Clear" variant="ghost" onPress={() => setCityUpload(NO_CITY_UPLOAD)} />
+            )}
+          </>
+        }
+      >
+        <CityUploadSections value={cityUpload} onChange={setCityUpload} />
       </Sheet>
     </>
   );

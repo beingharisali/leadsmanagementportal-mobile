@@ -67,7 +67,7 @@ export default function ImportLeadsScreen() {
     setProgress(0);
     setStep("importing");
     importLeads.mutate(
-      { rows, onProgress: setProgress },
+      { rows, fileName: sheet?.fileName ?? "Spreadsheet", onProgress: setProgress },
       {
         onSuccess: (res) => {
           setResult(res);

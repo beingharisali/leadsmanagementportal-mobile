@@ -14,6 +14,7 @@ import { radius, spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
 
 import { useMoveLeadsByStatus } from "../hooks";
+import type { CityUploadParams } from "../types";
 
 interface MoveStageSheetProps {
   open: boolean;
@@ -23,7 +24,7 @@ interface MoveStageSheetProps {
   /** How many leads will move (already narrowed by the filters) */
   count: number;
   /** The pipeline's filters, sent along so only the leads on screen move */
-  filters: { assignedTo?: string; assignedFrom?: string; assignedUntil?: string };
+  filters: { assignedTo?: string; assignedFrom?: string; assignedUntil?: string } & CityUploadParams;
   filtered: boolean;
 }
 
@@ -67,7 +68,7 @@ function MoveStageSheetBody({ open, onClose, from, count, filters, filtered }: M
     if (needsLostReason(to)) return setAskingReason(to);
     Alert.alert(
       `Move ${count} ${noun} to ${stageLabel(to)}?`,
-      `${filtered ? "Only the leads matching your filters (agent and assigned date) move. " : ""}Every lead in ${stageLabel(from)} goes to ${stageLabel(to)}.`,
+      `${filtered ? "Only the leads matching your filters move. " : ""}Every lead in ${stageLabel(from)} goes to ${stageLabel(to)}.`,
       [
         { text: "Cancel", style: "cancel" },
         { text: "Move", onPress: () => submit(to) },

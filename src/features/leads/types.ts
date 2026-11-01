@@ -44,6 +44,8 @@ export interface Lead {
   assignedTo: UserSummary | null;
   assignedAt?: string;
   createdBy: UserSummary;
+  /** The spreadsheet it was imported from; none for leads added by hand or imported before files were recorded */
+  upload?: { id: string; fileName: string; createdAt: string } | null;
   isSample: boolean;
   /** In the recycle bin */
   isDeleted?: boolean;
@@ -71,7 +73,65 @@ export interface LeadListParams {
   assignedFrom?: string;
   /** Assigned on or before this day, "YYYY-MM-DD" in the company's time zone */
   assignedUntil?: string;
+  /** Any of these cities (case doesn't matter) */
+  city?: string[];
+  /** One uploaded spreadsheet's id */
+  upload?: string;
+  /** From a file uploaded on or after this day, "YYYY-MM-DD" in the company's time zone */
+  uploadedFrom?: string;
+  /** From a file uploaded on or before this day */
+  uploadedUntil?: string;
   sort?: LeadSort;
+}
+
+/** The city and uploaded-file filters, also sent with the pipeline's whole-stage actions. */
+export type CityUploadParams = Pick<LeadListParams, "city" | "upload" | "uploadedFrom" | "uploadedUntil">;
+
+/** A city on the leads, with how many leads have it. */
+export interface LeadCity {
+  name: string;
+  count: number;
+}
+
+/** One row of the upload history (owners and admins). */
+export interface UploadHistoryItem {
+  id: string;
+  fileName: string;
+  uploadedAt: string;
+  uploadedBy: { id: string; name: string } | null;
+  rowCount: number;
+  /** Leads the file created */
+  createdCount: number;
+  /** Its leads not in the recycle bin right now */
+  activeCount: number;
+  /** Its leads a revert put in the recycle bin, which Undo revert would bring back */
+  inBin: number;
+  /** Oldest first */
+  reverts: {
+    at: string;
+    by: { id: string; name: string } | null;
+    count: number;
+    undoneAt: string | null;
+    undoneBy: { id: string; name: string } | null;
+  }[];
+}
+
+export interface UndoRevertResult {
+  restored: number;
+  failed: { id: string; businessName: string; reason: string }[];
+  /** Restored or deleted for good before the undo */
+  gone: number;
+}
+
+/** A spreadsheet imported into the leads list. */
+export interface LeadUpload {
+  id: string;
+  fileName: string;
+  uploadedAt: string;
+  uploadedBy: { id: string; name: string } | null;
+  rowCount: number;
+  /** Leads from it the user can see (not in the recycle bin) */
+  leadCount: number;
 }
 
 /** What the lead form sends (`POST /leads`, `PATCH /leads/:id`). */

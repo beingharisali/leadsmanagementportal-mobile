@@ -126,6 +126,14 @@ const MORE_SECTIONS: MoreSection[] = [
         href: "/leads/import",
       },
       {
+        title: "Upload history",
+        subtitle: "Imported files; revert one",
+        icon: "document-text-outline",
+        roles: MANAGER_ROLES,
+        feature: "import",
+        href: "/leads/uploads",
+      },
+      {
         title: "Recycle bin",
         subtitle: "Restore deleted leads",
         icon: "trash-outline",

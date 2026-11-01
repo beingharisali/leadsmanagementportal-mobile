@@ -11,6 +11,7 @@ import { SearchField } from "@/components/ui/search-field";
 import { EmptyView } from "@/components/ui/state-views";
 import { useCurrentUser } from "@/features/auth/auth-provider";
 import { assignedRangeFor, useCompanyToday } from "@/features/leads/components/assigned-date-filter";
+import { cityUploadParams } from "@/features/leads/components/city-upload-filter";
 import { countFilters, LeadFiltersSheet, NO_FILTERS, type LeadFilters } from "@/features/leads/components/lead-filters-sheet";
 import { LeadRow } from "@/features/leads/components/lead-row";
 import { useBulkAssign, useBulkDeleteLeads, useLeads } from "@/features/leads/hooks";
@@ -96,6 +97,7 @@ export default function LeadsScreen() {
       rating: filters.rating.length ? filters.rating : undefined,
       stale: filters.stale || undefined,
       ...assignedRangeFor(filters, today),
+      ...cityUploadParams(filters, today),
       sort: filters.sort,
       assignedTo: manager && scope !== "all" ? scope : undefined,
     }),

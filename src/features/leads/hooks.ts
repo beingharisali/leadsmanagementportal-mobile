@@ -5,7 +5,17 @@ import { apiClient, getErrorMessage, type Paginated } from "@/lib/api-client";
 import { nextPage } from "@/lib/infinite";
 
 import type { ImportLeadRow, ImportResult } from "./import";
-import type { Lead, LeadListParams, LeadPayload, LeadRating } from "./types";
+import type {
+  CityUploadParams,
+  Lead,
+  LeadCity,
+  LeadListParams,
+  LeadPayload,
+  LeadRating,
+  LeadUpload,
+  UndoRevertResult,
+  UploadHistoryItem,
+} from "./types";
 
 export const leadKeys = {
   all: ["leads"] as const,
@@ -169,6 +179,60 @@ export function useLeadTags() {
   });
 }
 
+/** Cities on the leads the user can see, for the city filter. */
+export function useLeadCities() {
+  return useQuery({
+    queryKey: [...leadKeys.all, "cities"],
+    queryFn: () => apiClient.get<LeadCity[]>("/leads/cities"),
+    staleTime: 60_000,
+  });
+}
+
+/** Uploaded spreadsheets holding leads the user can see (agents: only files with their own leads). */
+export function useLeadUploads() {
+  return useQuery({
+    queryKey: [...leadKeys.all, "uploads"],
+    queryFn: () => apiClient.get<LeadUpload[]>("/leads/uploads"),
+    staleTime: 60_000,
+  });
+}
+
+/** Managers: every recorded spreadsheet, newest first. */
+export function useUploadHistory() {
+  return useInfiniteQuery({
+    queryKey: [...leadKeys.all, "upload-history"],
+    queryFn: ({ pageParam }) =>
+      apiClient.getPaginated<UploadHistoryItem>("/leads/uploads/history", { page: pageParam, limit: 25 }),
+    initialPageParam: 1,
+    getNextPageParam: (last: Paginated<UploadHistoryItem>) => nextPage(last),
+  });
+}
+
+/** Managers: what reverting a file would do (active leads, how many were worked on). */
+export function useRevertPreview() {
+  return useMutation({
+    mutationFn: (id: string) => apiClient.get<{ active: number; worked: number }>(`/leads/uploads/${id}/revert`),
+  });
+}
+
+/** Managers: moves every active lead from the file to the recycle bin. */
+export function useRevertUpload() {
+  const refresh = useRefreshLead();
+  return useMutation({
+    mutationFn: (id: string) => apiClient.post<{ reverted: number }>(`/leads/uploads/${id}/revert`),
+    onSettled: () => refresh(),
+  });
+}
+
+/** Managers: brings back the leads the file's reverts put in the recycle bin. */
+export function useUndoRevert() {
+  const refresh = useRefreshLead();
+  return useMutation({
+    mutationFn: (id: string) => apiClient.post<UndoRevertResult>(`/leads/uploads/${id}/undo-revert`),
+    onSettled: () => refresh(),
+  });
+}
+
 /** Managers: deleted leads, newest first. */
 export function useTrash(search: string) {
   return useInfiniteQuery({
@@ -191,7 +255,9 @@ export function useDeleteLead() {
 export function useDeleteLeadsByStatus() {
   const refresh = useRefreshLead();
   return useMutation({
-    mutationFn: (body: { status: string; assignedTo?: string; assignedFrom?: string; assignedUntil?: string }) =>
+    mutationFn: (
+      body: { status: string; assignedTo?: string; assignedFrom?: string; assignedUntil?: string } & CityUploadParams,
+    ) =>
       apiClient.post<{ deleted: number }>("/leads/delete-by-status", body),
     onSuccess: () => refresh(),
   });
@@ -208,7 +274,7 @@ export function useMoveLeadsByStatus() {
       assignedTo?: string;
       assignedFrom?: string;
       assignedUntil?: string;
-    }) => apiClient.post<{ moved: number }>("/leads/move-by-status", body),
+    } & CityUploadParams) => apiClient.post<{ moved: number }>("/leads/move-by-status", body),
     onSuccess: () => refresh(),
   });
 }
@@ -300,11 +366,24 @@ const IMPORT_BATCH_SIZE = 100;
 export function useImportLeads() {
   const refresh = useRefreshLead();
   return useMutation({
-    mutationFn: async ({ rows, onProgress }: { rows: ImportLeadRow[]; onProgress?: (done: number) => void }) => {
+    mutationFn: async ({
+      rows,
+      fileName,
+      onProgress,
+    }: {
+      rows: ImportLeadRow[];
+      /** Recorded first, so every lead from the file can be filtered by it later */
+      fileName: string;
+      onProgress?: (done: number) => void;
+    }) => {
+      const upload = await apiClient.post<{ id: string }>("/leads/uploads", { fileName, rowCount: rows.length });
       const total: ImportResult = { created: 0, duplicates: 0, invalid: 0, failed: 0, results: [] };
       for (let i = 0; i < rows.length; i += IMPORT_BATCH_SIZE) {
         try {
-          const result = await apiClient.post<ImportResult>("/leads/import", { rows: rows.slice(i, i + IMPORT_BATCH_SIZE) });
+          const result = await apiClient.post<ImportResult>("/leads/import", {
+            uploadId: upload.id,
+            rows: rows.slice(i, i + IMPORT_BATCH_SIZE),
+          });
           total.created += result.created;
           total.duplicates += result.duplicates;
           total.invalid += result.invalid;
