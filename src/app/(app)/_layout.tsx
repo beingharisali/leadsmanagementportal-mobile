@@ -25,6 +25,7 @@ export default function AppLayout() {
         <Stack.Screen name="leads/[id]/edit" options={{ title: "Edit lead" }} />
         <Stack.Screen name="leads/new" options={{ title: "Add lead" }} />
         <Stack.Screen name="leads/import" options={{ title: "Import leads" }} />
+        <Stack.Screen name="leads/uploads" options={{ title: "Upload history" }} />
         <Stack.Screen name="pipeline" options={{ title: "Pipeline" }} />
         <Stack.Screen name="handovers" options={{ title: "Handover requests" }} />
         <Stack.Screen name="recycle-bin" options={{ title: "Recycle bin" }} />

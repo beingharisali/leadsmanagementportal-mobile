@@ -12,8 +12,9 @@ import { leadRatingLabels, leadSortLabels } from "../config";
 import { useLeadTags } from "../hooks";
 import { LEAD_RATINGS, LEAD_SORTS, type LeadRating, type LeadSort } from "../types";
 import { AssignedDateSection, NO_ASSIGNED, type AssignedFilter } from "./assigned-date-filter";
+import { CityUploadSections, countCityUpload, NO_CITY_UPLOAD, type CityUploadFilter } from "./city-upload-filter";
 
-export interface LeadFilters extends AssignedFilter {
+export interface LeadFilters extends AssignedFilter, CityUploadFilter {
   status: string[];
   source: string[];
   /** One tag, or "" */
@@ -30,6 +31,7 @@ export const NO_FILTERS: LeadFilters = {
   rating: [],
   stale: false,
   ...NO_ASSIGNED,
+  ...NO_CITY_UPLOAD,
   sort: "-createdAt",
 };
 
@@ -41,7 +43,8 @@ export function countFilters(filters: LeadFilters) {
     filters.rating.length +
     (filters.tag ? 1 : 0) +
     (filters.stale ? 1 : 0) +
-    (filters.assigned ? 1 : 0)
+    (filters.assigned ? 1 : 0) +
+    countCityUpload(filters)
   );
 }
 
@@ -58,7 +61,7 @@ interface LeadFiltersSheetProps {
   total?: number;
 }
 
-/** Stage, rating, "needs attention" and sort order for the leads list. Applies as you tap. */
+/** Stage, rating, city, uploaded file, "needs attention" and sort order for the leads list. Applies as you tap. */
 export function LeadFiltersSheet({ open, onClose, filters, onChange, total }: LeadFiltersSheetProps) {
   const { colors } = useTheme();
   const { stages, sources, tags: companyTags } = useLeadOptions();
@@ -130,6 +133,8 @@ export function LeadFiltersSheet({ open, onClose, filters, onChange, total }: Le
       </Section>
 
       <AssignedDateSection value={filters} onChange={(assigned) => onChange({ ...filters, ...assigned })} />
+
+      <CityUploadSections value={filters} onChange={(next) => onChange({ ...filters, ...next })} />
 
       <View style={styles.switchRow}>
         <View style={styles.flex}>

@@ -42,6 +42,7 @@ const KEYWORDS: Record<string, string> = {
   "/performance": "leaderboard targets report agents ranking conversion",
   "/activity": "activity feed audit log history changes",
   "/leads/import": "upload excel csv spreadsheet bulk add import",
+  "/leads/uploads": "upload history imported files excel revert undo import",
   "/recycle-bin": "trash deleted restore recover bin",
   "/settings/company": "company name logo details",
   "/settings/pipeline": "stages statuses rename reorder colours colors pipeline settings",
