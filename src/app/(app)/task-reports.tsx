@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
 import { Screen } from "@/components/ui/screen";
 import { EmptyView, ErrorView, LoadingView } from "@/components/ui/state-views";
-import { useDepartmentName, useDepartments } from "@/features/departments/hooks";
+import { useDepartmentName, useWorkDepartments } from "@/features/departments/hooks";
 import { useTaskAccess, useTaskReport } from "@/features/tasks/hooks";
 import { spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
@@ -32,7 +32,7 @@ function rangeOf(value: string) {
 export default function TaskReportsScreen() {
   const { colors } = useTheme();
   const access = useTaskAccess();
-  const departments = useDepartments();
+  const departments = useWorkDepartments();
   const departmentName = useDepartmentName();
   const [range, setRange] = useState<string>("30");
   const [department, setDepartment] = useState<string | null>(null);

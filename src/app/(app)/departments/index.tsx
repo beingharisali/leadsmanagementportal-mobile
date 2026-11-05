@@ -11,7 +11,7 @@ import { Sheet } from "@/components/ui/sheet";
 import { ErrorView, LoadingView } from "@/components/ui/state-views";
 import { TextField } from "@/components/ui/text-field";
 import { useLeadOptions } from "@/features/customization/hooks";
-import { useCreateDepartment, useDepartmentPeople, useDepartments } from "@/features/departments/hooks";
+import { useCreateDepartment, useDepartmentPeople, useWorkDepartments } from "@/features/departments/hooks";
 import { useCanEdit } from "@/features/organizations/hooks";
 import { PeopleField } from "@/features/tasks/components/people-field";
 import { useTaskAccess } from "@/features/tasks/hooks";
@@ -30,7 +30,7 @@ export default function DepartmentsScreen() {
   const { colors } = useTheme();
   const canEdit = useCanEdit();
   const access = useTaskAccess();
-  const departments = useDepartments();
+  const departments = useWorkDepartments();
   const canManage = canEdit && Boolean(access.data?.canManageDepartments);
   const [creating, setCreating] = useState(false);
 
