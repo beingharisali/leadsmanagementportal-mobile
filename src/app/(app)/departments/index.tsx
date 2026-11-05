@@ -12,6 +12,7 @@ import { ErrorView, LoadingView } from "@/components/ui/state-views";
 import { TextField } from "@/components/ui/text-field";
 import { useLeadOptions } from "@/features/customization/hooks";
 import { useCreateDepartment, useDepartmentPeople, useWorkDepartments } from "@/features/departments/hooks";
+import { headsLabel } from "@/features/departments/types";
 import { useCanEdit } from "@/features/organizations/hooks";
 import { PeopleField } from "@/features/tasks/components/people-field";
 import { useTaskAccess } from "@/features/tasks/hooks";
@@ -23,7 +24,7 @@ import { useTheme } from "@/theme/use-theme";
 
 /**
  * The company's departments. Everyone but the owner is in one; a department's
- * head sees every task of the people in it. Tap one to see its people.
+ * heads see every task of the people in it. Tap one to see its people.
  */
 export default function DepartmentsScreen() {
   const navigation = useNavigation();
@@ -45,7 +46,7 @@ export default function DepartmentsScreen() {
 
   return (
     <Screen onRefresh={() => departments.refetch()}>
-      <AppText muted>Each person works in one department. A department&apos;s head sees every task of the people in it.</AppText>
+      <AppText muted>Each person works in one department. A department&apos;s heads see every task of the people in it.</AppText>
       <View style={styles.list}>
         {(departments.data ?? []).map((department) => (
           <Pressable
@@ -64,7 +65,7 @@ export default function DepartmentsScreen() {
                 {department.kind && <Badge label="Built in" color="indigo" />}
               </View>
               <AppText variant="small" muted>
-                {department.memberCount} {department.memberCount === 1 ? "person" : "people"} · Head: {department.head?.name ?? "nobody"}
+                {department.memberCount} {department.memberCount === 1 ? "person" : "people"} · {headsLabel(department)}
               </AppText>
               {department.shift && (
                 <AppText variant="small" muted>
@@ -96,7 +97,7 @@ function CreateSheet({ open, onClose }: { open: boolean; onClose: () => void }) 
     if (name.trim().length < 2) return Alert.alert("Give the department a name");
     if (ownHours && isEmptyShift(shift)) return Alert.alert("The shift must end at a different time");
     create.mutate(
-      { name: name.trim(), description: description.trim() || undefined, head: head[0] ?? null, shift: ownHours ? shift : null },
+      { name: name.trim(), description: description.trim() || undefined, heads: head, shift: ownHours ? shift : null },
       {
         onSuccess: () => {
           setName("");
@@ -121,8 +122,7 @@ function CreateSheet({ open, onClose }: { open: boolean; onClose: () => void }) 
       <TextField label="Name" value={name} onChangeText={setName} placeholder="e.g. Development" maxLength={60} autoCapitalize="words" />
       <TextField label="Description" value={description} onChangeText={setDescription} maxLength={300} />
       <PeopleField
-        label="Head"
-        single
+        label="Heads"
         placeholder="Nobody"
         options={(people.data ?? []).filter((p) => p.canHead)}
         value={head}
