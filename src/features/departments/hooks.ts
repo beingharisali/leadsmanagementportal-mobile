@@ -8,6 +8,8 @@ import type { Department, DepartmentDetail, DepartmentPayload, DepartmentPerson 
 /** Same endpoints as the website (server/src/modules/departments). */
 const departmentsApi = {
   list: () => apiClient.get<Department[]>("/departments"),
+  /** The Work area's list: a department head gets only the departments they head. */
+  mine: () => apiClient.get<Department[]>("/departments?scope=mine"),
   get: (id: string) => apiClient.get<DepartmentDetail>(`/departments/${id}`),
   people: () => apiClient.get<DepartmentPerson[]>("/departments/people"),
   create: (payload: DepartmentPayload) => apiClient.post<Department>("/departments", payload),
@@ -20,12 +22,23 @@ export const departmentKeys = {
   all: ["departments"] as const,
   detail: (id: string) => [...departmentKeys.all, id] as const,
   people: () => [...departmentKeys.all, "people"] as const,
+  mine: () => [...departmentKeys.all, "mine"] as const,
 };
 
 /** The company's departments: General Team and Sales first. */
 export function useDepartments(enabled = true) {
   const hasWork = useHasFeature("workManagement");
   return useQuery({ queryKey: departmentKeys.all, queryFn: departmentsApi.list, enabled: enabled && hasWork, staleTime: 60_000 });
+}
+
+/**
+ * Departments for the Work area (Departments, Task reports). A department head
+ * who doesn't manage departments gets only the ones they head; everyone else
+ * gets them all, like useDepartments.
+ */
+export function useWorkDepartments() {
+  const hasWork = useHasFeature("workManagement");
+  return useQuery({ queryKey: departmentKeys.mine(), queryFn: departmentsApi.mine, enabled: hasWork, staleTime: 60_000 });
 }
 
 export function useDepartment(id: string) {
