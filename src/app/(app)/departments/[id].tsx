@@ -19,7 +19,7 @@ import {
   useMoveToDepartment,
   useUpdateDepartment,
 } from "@/features/departments/hooks";
-import type { DepartmentDetail } from "@/features/departments/types";
+import { headsLabel, type DepartmentDetail } from "@/features/departments/types";
 import { useCanEdit } from "@/features/organizations/hooks";
 import { PeopleField } from "@/features/tasks/components/people-field";
 import { useTaskAccess } from "@/features/tasks/hooks";
@@ -87,7 +87,7 @@ export default function DepartmentScreen() {
   return (
     <Screen onRefresh={() => department.refetch()}>
       <AppText muted>
-        {data.description || `${data.memberCount} ${data.memberCount === 1 ? "person" : "people"}`} · Head: {data.head?.name ?? "nobody"}
+        {data.description || `${data.memberCount} ${data.memberCount === 1 ? "person" : "people"}`} · {headsLabel(data)}
       </AppText>
       {data.shift && <AppText muted>Working hours: {formatShift(data.shift)}</AppText>}
       <Card>
@@ -102,7 +102,7 @@ export default function DepartmentScreen() {
                   {m.email}
                 </AppText>
               </View>
-              <Badge label={data.head?.id === m.id ? "Head" : userRoleLabels[m.role]} color={data.head?.id === m.id ? "indigo" : "slate"} />
+              <Badge label={data.heads.some((h) => h.id === m.id) ? "Head" : userRoleLabels[m.role]} color={data.heads.some((h) => h.id === m.id) ? "indigo" : "slate"} />
             </View>
           ))
         )}
@@ -141,7 +141,7 @@ function EditSheet({ department, open, onClose }: { department: DepartmentDetail
   const people = useDepartmentPeople(open);
   const [name, setName] = useState(department.name);
   const [description, setDescription] = useState(department.description ?? "");
-  const [head, setHead] = useState<string[]>(department.head ? [department.head.id] : []);
+  const [head, setHead] = useState<string[]>(department.heads.map((h) => h.id));
   const { colors } = useTheme();
   const { tracking } = useLeadOptions();
   const company: UserShift = { start: tracking.shiftStart, end: tracking.shiftEnd, workDays: tracking.workDays };
@@ -157,7 +157,7 @@ function EditSheet({ department, open, onClose }: { department: DepartmentDetail
         payload: {
           ...(!department.kind && { name: name.trim() }),
           description: description.trim() || null,
-          head: head[0] ?? null,
+          heads: head,
           shift: ownHours ? shift : null,
         },
       },
@@ -182,8 +182,7 @@ function EditSheet({ department, open, onClose }: { department: DepartmentDetail
       />
       <TextField label="Description" value={description} onChangeText={setDescription} maxLength={300} />
       <PeopleField
-        label="Head"
-        single
+        label="Heads"
         placeholder="Nobody"
         options={(people.data ?? []).filter((p) => p.canHead)}
         value={head}
