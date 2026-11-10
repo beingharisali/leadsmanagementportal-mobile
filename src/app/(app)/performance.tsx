@@ -26,10 +26,13 @@ import { getErrorMessage } from "@/lib/api-client";
 import { formatCurrency } from "@/lib/format";
 import { radius, spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
+import { usePersistedState } from "@/lib/persisted-state";
 
 /** Owners and admins: every agent's results side by side, and their progress to targets. */
 export default function PerformanceScreen() {
-  const [tab, setTab] = useState<"report" | "targets">("report");
+  const [tab, setTab] = usePersistedState<"report" | "targets">("performance.tab", "report", {
+    revive: (raw) => (raw === "report" || raw === "targets" ? raw : undefined),
+  });
   return (
     <Screen>
       <SegmentedControl
@@ -103,9 +106,12 @@ function dateToDay(date: Date) {
 function ReportTab() {
   const { tracking } = useLeadOptions();
   const today = todayIn(tracking.timeZone);
-  const [preset, setPreset] = useState<Preset>("month");
-  const [custom, setCustom] = useState(() => rangeFor("month", today));
-  const [sort, setSort] = useState<SortKey>("score");
+  const [preset, setPreset] = usePersistedState<Preset>("performance.preset", "month", {
+    revive: (raw) => (typeof raw === "string" && raw in PRESET_LABELS ? (raw as Preset) : undefined),
+  });
+  const [custom, setCustom] = usePersistedState("performance.custom", () => rangeFor("month", today));
+  const [sort, setSort] = usePersistedState<SortKey>("performance.sort", "score");
+
   const range = preset === "custom" ? custom : rangeFor(preset, today);
   const report = usePerformance(range);
   const data = report.data;

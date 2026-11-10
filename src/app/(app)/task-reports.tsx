@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/ui/app-text";
@@ -10,6 +10,8 @@ import { useDepartmentName, useWorkDepartments } from "@/features/departments/ho
 import { useTaskAccess, useTaskReport } from "@/features/tasks/hooks";
 import { spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
+import { ResetChip } from "@/components/ui/reset-chip";
+import { usePersistedState } from "@/lib/persisted-state";
 
 const RANGES = [
   { value: "7", label: "7 days" },
@@ -34,8 +36,8 @@ export default function TaskReportsScreen() {
   const access = useTaskAccess();
   const departments = useWorkDepartments();
   const departmentName = useDepartmentName();
-  const [range, setRange] = useState<string>("30");
-  const [department, setDepartment] = useState<string | null>(null);
+  const [range, setRange] = usePersistedState<string>("taskReport.range", "30");
+  const [department, setDepartment] = usePersistedState<string | null>("taskReport.department", null);
   const params = useMemo(() => ({ ...rangeOf(range), department: department ?? undefined }), [range, department]);
   const report = useTaskReport(params);
   const allowed = access.data?.isOwner ? departments.data : departments.data?.filter((d) => access.data?.headOf.includes(d.id));
@@ -52,7 +54,15 @@ export default function TaskReportsScreen() {
         {(allowed ?? []).map((d) => (
           <Chip key={d.id} label={d.name} selected={department === d.id} onPress={() => setDepartment(d.id)} />
         ))}
+        <ResetChip
+          show={range !== "30" || department !== null}
+          onReset={() => {
+            setRange("30");
+            setDepartment(null);
+          }}
+        />
       </ScrollView>
+
       {report.isPending ? (
         <LoadingView />
       ) : report.error ? (

@@ -1,5 +1,5 @@
 import { router, useNavigation } from "expo-router";
-import { useLayoutEffect, useMemo, useState } from "react";
+import { useLayoutEffect, useMemo } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/ui/app-text";
@@ -14,6 +14,8 @@ import { useCanEdit } from "@/features/organizations/hooks";
 import { getErrorMessage } from "@/lib/api-client";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { spacing } from "@/theme/colors";
+import { ResetChip } from "@/components/ui/reset-chip";
+import { reviveDate, usePersistedState } from "@/lib/persisted-state";
 
 import { useSetMyStatus, useTaskAccess, useTasks } from "../hooks";
 import {
@@ -53,14 +55,18 @@ export function TasksScreen() {
   const canEdit = useCanEdit();
   const access = useTaskAccess();
   const setMyStatus = useSetMyStatus();
-  const [scope, setScope] = useState<TaskScope | null>(null);
-  const [view, setView] = useState<View_>("list");
-  const [column, setColumn] = useState<TaskStatus>("todo");
-  const [status, setStatus] = useState<TaskStatus | null>(null);
-  const [due, setDue] = useState<Due | null>(null);
-  const [bin, setBin] = useState(false);
-  const [search, setSearch] = useState("");
-  const [month, setMonth] = useState(() => new Date());
+  const [scope, setScope] = usePersistedState<TaskScope | null>("tasks.scope", null);
+  const [view, setView] = usePersistedState<View_>("tasks.view", "list", {
+    revive: (raw) => (raw === "list" || raw === "board" || raw === "calendar" ? raw : undefined),
+  });
+  const [column, setColumn] = usePersistedState<TaskStatus>("tasks.column", "todo", {
+    revive: (raw) => TASK_STATUSES.find((s) => s === raw),
+  });
+  const [status, setStatus] = usePersistedState<TaskStatus | null>("tasks.status", null);
+  const [due, setDue] = usePersistedState<Due | null>("tasks.due", null);
+  const [bin, setBin] = usePersistedState("tasks.bin", false);
+  const [search, setSearch] = usePersistedState("tasks.search", "");
+  const [month, setMonth] = usePersistedState("tasks.month", () => new Date(), { revive: reviveDate });
   const debounced = useDebouncedValue(search.trim(), 300);
 
   const scopes: TaskScope[] = [
@@ -69,7 +75,8 @@ export function TasksScreen() {
     "review",
     "all",
   ];
-  const activeScope = scope ?? scopes[0] ?? "all";
+  // A remembered tab the person can no longer see falls back to their first one.
+  const activeScope = (scope && scopes.includes(scope) ? scope : null) ?? scopes[0] ?? "all";
 
   const params = useMemo<TaskListParams>(() => {
     const base: TaskListParams = {
@@ -102,7 +109,7 @@ export function TasksScreen() {
         </View>
       ),
     });
-  }, [navigation, bin, canEdit, access.data?.canAssign]);
+  }, [navigation, bin, setBin, canEdit, access.data?.canAssign]);
 
   /** Long-press: people on a task move their own part. */
   function moveMine(task: Task) {
@@ -138,8 +145,17 @@ export function TasksScreen() {
       )}
       <SearchField value={search} onChangeText={setSearch} placeholder="Search tasks" />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+        <ResetChip
+          show={!!search || !!status || !!due}
+          onReset={() => {
+            setSearch("");
+            setStatus(null);
+            setDue(null);
+          }}
+        />
         {!bin &&
           (["list", "board", "calendar"] as const).map((v) => (
+
             <Chip
               key={v}
               label={v === "list" ? "List" : v === "board" ? "Board" : "Calendar"}

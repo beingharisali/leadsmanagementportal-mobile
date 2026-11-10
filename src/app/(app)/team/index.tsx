@@ -27,6 +27,8 @@ import { formatDateTime, getInitials } from "@/lib/format";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { radius, spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
+import { ResetChip } from "@/components/ui/reset-chip";
+import { usePersistedState } from "@/lib/persisted-state";
 
 const ROLE_FILTERS: { value: UserListParams["role"]; label: string }[] = [
   { value: undefined, label: "All roles" },
@@ -48,9 +50,9 @@ const STATUS_FILTERS: { value: UserListParams["status"]; label: string }[] = [
 export default function TeamScreen() {
   const me = useCurrentUser();
   const canEdit = useCanEdit();
-  const [search, setSearch] = useState("");
-  const [role, setRole] = useState<UserListParams["role"]>();
-  const [status, setStatus] = useState<UserListParams["status"]>();
+  const [search, setSearch] = usePersistedState("team.search", "");
+  const [role, setRole] = usePersistedState<UserListParams["role"]>("team.role", undefined);
+  const [status, setStatus] = usePersistedState<UserListParams["status"]>("team.status", undefined);
   const debouncedSearch = useDebouncedValue(search.trim());
   const users = useUsers({ search: debouncedSearch || undefined, role, status });
   const update = useUpdateUser();
@@ -144,7 +146,16 @@ export default function TeamScreen() {
               {STATUS_FILTERS.map((f) => (
                 <Chip key={f.label} label={f.label} selected={status === f.value} onPress={() => setStatus(f.value)} />
               ))}
+              <ResetChip
+                show={!!search || !!role || !!status}
+                onReset={() => {
+                  setSearch("");
+                  setRole(undefined);
+                  setStatus(undefined);
+                }}
+              />
             </View>
+
           </>
         }
         empty={

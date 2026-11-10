@@ -16,10 +16,13 @@ import type { AttendanceDay, AttendanceStatus } from "@/features/tracking/types"
 import { getErrorMessage } from "@/lib/api-client";
 import { radius, spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
+import { usePersistedState } from "@/lib/persisted-state";
 
 /** Owners and admins: every agent's hours for a day, or a month of attendance. */
 export default function TimesheetsScreen() {
-  const [tab, setTab] = useState<"daily" | "attendance">("daily");
+  const [tab, setTab] = usePersistedState<"daily" | "attendance">("timesheet.tab", "daily", {
+    revive: (raw) => (raw === "daily" || raw === "attendance" ? raw : undefined),
+  });
   return (
     <Screen>
       <SegmentedControl
@@ -37,7 +40,10 @@ export default function TimesheetsScreen() {
 
 function DailyTab() {
   const { tracking } = useLeadOptions();
-  const [date, setDate] = useState(() => todayIn(tracking.timeZone));
+  // Remembered day; "" (today) stays today tomorrow.
+  const [savedDate, setSavedDate] = usePersistedState("timesheet.date", "");
+  const date = savedDate || todayIn(tracking.timeZone);
+  const setDate = (day: string) => setSavedDate(day >= todayIn(tracking.timeZone) ? "" : day);
   const sheet = useTimesheet({ from: date, to: date });
   const data = sheet.data;
   const today = data?.today ?? todayIn(tracking.timeZone);
@@ -105,7 +111,11 @@ function AttendanceTab() {
   const { colors } = useTheme();
   const { tracking } = useLeadOptions();
   const thisMonth = todayIn(tracking.timeZone).slice(0, 7);
-  const [month, setMonth] = useState(thisMonth);
+  // Remembered month; "" (this month) stays the current month.
+  const [savedMonth, setSavedMonth] = usePersistedState("attendance.month", "");
+  const month = savedMonth || thisMonth;
+  const setMonth = (value: string) => setSavedMonth(value >= thisMonth ? "" : value);
+
   const [picked, setPicked] = useState<{ user: string; day: AttendanceDay } | null>(null);
   const attendance = useAttendance({ month });
   const data = attendance.data;

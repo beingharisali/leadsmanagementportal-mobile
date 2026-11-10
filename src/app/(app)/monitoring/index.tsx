@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/ui/app-text";
@@ -14,6 +14,7 @@ import { userRoleLabels } from "@/features/users/types";
 import { getInitials } from "@/lib/format";
 import { radius, spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
+import { usePersistedState } from "@/lib/persisted-state";
 
 const STATUSES: PresenceStatus[] = ["online", "idle", "offline"];
 
@@ -21,7 +22,8 @@ const STATUSES: PresenceStatus[] = ["online", "idle", "offline"];
 export default function LiveStatusScreen() {
   const { colors } = useTheme();
   const presence = usePresence();
-  const [everyone, setEveryone] = useState(false);
+  const [everyone, setEveryone] = usePersistedState("monitoring.everyone", false);
+
   const data = presence.data;
   const rows = (data?.users ?? []).filter((r) => everyone || r.user.role === "agent");
   const counts = Object.fromEntries(STATUSES.map((s) => [s, rows.filter((r) => r.status === s).length])) as Record<

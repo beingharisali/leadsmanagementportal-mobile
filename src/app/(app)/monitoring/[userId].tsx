@@ -25,6 +25,7 @@ import { flattenPages } from "@/lib/infinite";
 import { getInitials } from "@/lib/format";
 import { radius, spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
+import { usePersistedState } from "@/lib/persisted-state";
 
 type Tab = "day" | "timesheet" | "logins";
 
@@ -33,9 +34,17 @@ export default function AgentScreen() {
   const { colors } = useTheme();
   const params = useLocalSearchParams<{ userId: string; date?: string }>();
   const userId = params.userId;
-  const [tab, setTab] = useState<Tab>("day");
-  const [date, setDate] = useState<string | undefined>(params.date);
+  const [tab, setTab] = usePersistedState<Tab>("monitoring.tab", "day", {
+    revive: (raw) => (raw === "day" || raw === "timesheet" || raw === "logins" ? raw : undefined),
+  });
+  // The day picked for this person; "" is today (so it stays today tomorrow). A link's day replaces it.
+  const [savedDate, setSavedDate] = usePersistedState(`monitoring.${userId}.date`, params.date ?? "", {
+    override: !!params.date,
+  });
+  const date = savedDate || undefined;
   const [knownToday, setKnownToday] = useState<string>();
+  const setDate = (day: string) => setSavedDate(knownToday && day >= knownToday ? "" : day);
+
   const isToday = !date || date === knownToday;
   const day = useAgentDay(userId, date, isToday);
   const data = day.data;
@@ -238,7 +247,10 @@ const RANGES = [7, 14, 30] as const;
 
 function TimesheetTab({ userId, today }: { userId: string; today: string }) {
   const { tracking } = useLeadOptions();
-  const [range, setRange] = useState<(typeof RANGES)[number]>(7);
+  const [range, setRange] = usePersistedState<(typeof RANGES)[number]>("monitoring.timesheetRange", 7, {
+    revive: (raw) => RANGES.find((r) => r === raw),
+  });
+
   const to = today || todayIn(tracking.timeZone);
   const sheet = useTimesheet({ from: addDays(to, -(range - 1)), to, user: userId });
   const rows = [...(sheet.data?.rows ?? [])].reverse();

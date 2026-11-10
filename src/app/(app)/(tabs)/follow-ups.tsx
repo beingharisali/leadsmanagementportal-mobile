@@ -25,6 +25,8 @@ import { isManagerRole } from "@/features/users/types";
 import { flattenPages } from "@/lib/infinite";
 import { useNow } from "@/lib/use-now";
 import { spacing } from "@/theme/colors";
+import { ResetChip } from "@/components/ui/reset-chip";
+import { usePersistedState } from "@/lib/persisted-state";
 
 const EMPTY: Record<FollowUpView, { title: string; message: string }> = {
   overdue: { title: "Nothing overdue", message: "Every follow-up is on time. Nice work." },
@@ -52,16 +54,20 @@ export default function FollowUpsScreen() {
   const user = useCurrentUser();
   const manager = isManagerRole(user.role);
   const now = useNow();
-  const [view, setView] = useState<FollowUpView>("today");
-  const [team, setTeam] = useState(false);
-  const [type, setType] = useState<FollowUpType | null>(null);
-  const [agentId, setAgentId] = useState<string | null>(null);
+  const [view, setView] = usePersistedState<FollowUpView>("followUps.view", "today", {
+    revive: (raw) => (FOLLOW_UP_VIEWS.includes(raw as FollowUpView) ? (raw as FollowUpView) : undefined),
+  });
+  const [savedTeam, setTeam] = usePersistedState("followUps.team", false);
+  const team = savedTeam && manager;
+  const [type, setType] = usePersistedState<FollowUpType | null>("followUps.type", null);
+  const [agentId, setAgentId] = usePersistedState<string | null>("followUps.agent", null);
   const [pickingAgent, setPickingAgent] = useState(false);
   const users = useAssignableUsers(manager && team);
   const agent = agentId ? users.data?.find((u) => u.id === agentId) : undefined;
   // Links (Home, alerts) open this tab on a given view, scope or agent (see lib/link-params.ts).
   const link = useLocalSearchParams<{ view?: string; scope?: string; assignedTo?: string; at?: string }>();
-  const [appliedLink, setAppliedLink] = useState<string | undefined>(undefined);
+  // Remembered too, so reopening the app doesn't apply an old link over newer changes.
+  const [appliedLink, setAppliedLink] = usePersistedState<string | undefined>("followUps.appliedLink", undefined);
   if (link.at && link.at !== appliedLink) {
     setAppliedLink(link.at);
     if (FOLLOW_UP_VIEWS.includes(link.view as FollowUpView)) setView(link.view as FollowUpView);
@@ -157,7 +163,15 @@ export default function FollowUpsScreen() {
                   onPress={() => setType(type === t ? null : t)}
                 />
               ))}
+              <ResetChip
+                show={!!type || (team && !!agentId)}
+                onReset={() => {
+                  setType(null);
+                  setAgentId(null);
+                }}
+              />
             </View>
+
             <SegmentedControl
               value={view}
               onChange={setView}

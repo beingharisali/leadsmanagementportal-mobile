@@ -1,5 +1,4 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/ui/app-text";
@@ -16,6 +15,7 @@ import {
 } from "@/features/performance/hooks";
 import { radius, spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
+import { usePersistedState } from "@/lib/persisted-state";
 
 import { CardHeader } from "./card-header";
 
@@ -28,7 +28,10 @@ export function LeaderboardCard() {
   const user = useCurrentUser();
   const { colors } = useTheme();
   const hasMonitoring = user.organization?.features.includes("monitoring") ?? false;
-  const [period, setPeriod] = useState<LeaderboardPeriod>("week");
+  const [period, setPeriod] = usePersistedState<LeaderboardPeriod>("leaderboard.period", "week", {
+    revive: (raw) => LEADERBOARD_PERIODS.find((p) => p === raw),
+  });
+
   const leaderboard = useLeaderboard(period, hasMonitoring);
   if (!hasMonitoring) return null;
 

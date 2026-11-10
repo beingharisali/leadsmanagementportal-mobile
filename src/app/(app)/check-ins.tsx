@@ -1,6 +1,5 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Linking from "expo-linking";
-import { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/ui/app-text";
@@ -16,6 +15,8 @@ import type { ColorName } from "@/features/customization/types";
 import { userRoleLabels } from "@/features/users/types";
 import { spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
+import { ResetChip } from "@/components/ui/reset-chip";
+import { usePersistedState } from "@/lib/persisted-state";
 
 const statusColors: Record<CheckInStatus, ColorName> = {
   not_checked_in: "slate",
@@ -32,8 +33,10 @@ const shiftDay = (day: string, amount: number) => {
 /** The day's check-ins for owners and admins: status, times, breaks and locations. */
 export default function CheckInsScreen() {
   const { colors } = useTheme();
-  const [date, setDate] = useState("");
-  const board = useCheckInBoard(date);
+  // "" means today; picking today again stores "" so it stays today tomorrow.
+  const [savedDate, setSavedDate] = usePersistedState("checkIns.date", "");
+  const board = useCheckInBoard(savedDate);
+  const setDate = (day: string) => setSavedDate(board.data && day >= board.data.today ? "" : day);
 
   if (board.isPending) return <LoadingView />;
   if (!board.data) return <ErrorView error={board.error} onRetry={() => void board.refetch()} />;
@@ -58,8 +61,14 @@ export default function CheckInsScreen() {
           style={styles.arrow}
         />
       </View>
+      {data.date !== data.today && (
+        <View style={styles.resetRow}>
+          <ResetChip show onReset={() => setSavedDate("")} />
+        </View>
+      )}
       <AppText variant="small" muted>
-        {data.summary.checkedIn} of {data.summary.expected} checked in · {data.summary.late} late · {data.summary.onBreak} on a break ·{" "}
+        {data.summary.checkedIn} of {data.summary.expected} checked in
+ · {data.summary.late} late · {data.summary.onBreak} on a break ·{" "}
         {data.summary.checkedOut} checked out
       </AppText>
 
@@ -123,6 +132,7 @@ export default function CheckInsScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   dayRow: { flexDirection: "row", alignItems: "center" },
+  resetRow: { flexDirection: "row", justifyContent: "center" },
   dayLabel: { flex: 1, textAlign: "center" },
   arrow: { minHeight: 40, paddingHorizontal: spacing.sm },
   head: { flexDirection: "row", alignItems: "flex-start", gap: spacing.sm },

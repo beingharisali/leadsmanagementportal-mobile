@@ -25,13 +25,17 @@ import { flattenPages } from "@/lib/infinite";
 import { formatTimeAgo } from "@/lib/format";
 import { radius, spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
+import { usePersistedState } from "@/lib/persisted-state";
 
 const STATUS_COLORS = { pending: "amber", approved: "emerald", rejected: "rose", cancelled: "slate" } as const;
 
 /** Managers: agents asking for one of their leads to go to someone else. */
 export default function HandoversScreen() {
   const canEdit = useCanEdit();
-  const [view, setView] = useState<"pending" | "all">("pending");
+  const [view, setView] = usePersistedState<"pending" | "all">("handovers.view", "pending", {
+    revive: (raw) => (raw === "pending" || raw === "all" ? raw : undefined),
+  });
+
   const requests = useReassignments(view === "pending" ? { status: "pending" } : {});
   const pendingCount = usePendingReassignmentCount(true);
   const approve = useApproveReassignment();

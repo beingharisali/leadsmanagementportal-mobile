@@ -25,6 +25,8 @@ import { flattenPages } from "@/lib/infinite";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
+import { ResetChip } from "@/components/ui/reset-chip";
+import { usePersistedState } from "@/lib/persisted-state";
 
 /** Managers choose whose leads: everyone's, theirs, nobody's, or one agent's (a user id). */
 type Scope = "all" | "me" | "unassigned" | (string & {});
@@ -45,9 +47,9 @@ export default function LeadsScreen() {
   // Links can open this tab already filtered (see lib/link-params.ts).
   const params = useLocalSearchParams<{ stale?: string; assignedTo?: string; rating?: string; tag?: string; at?: string }>();
 
-  const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState<LeadFilters>(NO_FILTERS);
-  const [scope, setScope] = useState<Scope>("all");
+  const [search, setSearch] = usePersistedState("leads.search", "");
+  const [filters, setFilters] = usePersistedState<LeadFilters>("leads.filters", NO_FILTERS);
+  const [scope, setScope] = usePersistedState<Scope>("leads.scope", "all");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [pickingAgent, setPickingAgent] = useState(false);
   const debouncedSearch = useDebouncedValue(search.trim());
@@ -61,7 +63,8 @@ export default function LeadsScreen() {
   const bulkDelete = useBulkDeleteLeads();
 
   // A link replaces the filters with its own.
-  const [appliedLink, setAppliedLink] = useState<string | undefined>(undefined);
+  // Remembered too, so reopening the app doesn't apply an old link over newer changes.
+  const [appliedLink, setAppliedLink] = usePersistedState<string | undefined>("leads.appliedLink", undefined);
   if (params.at && params.at !== appliedLink) {
     setAppliedLink(params.at);
     const rating = LEAD_RATINGS.find((r) => r === params.rating);
@@ -110,6 +113,13 @@ export default function LeadsScreen() {
   const filterCount = countFilters(filters);
   const filtered = filterCount > 0 || !!debouncedSearch || scope !== "all";
   const agent = FIXED_SCOPES.includes(scope) ? undefined : users.data?.find((u) => u.id === scope);
+
+  function resetFilters() {
+    setSearch("");
+    setFilters({ ...NO_FILTERS, sort: filters.sort });
+    setScope("all");
+  }
+
 
   const toggle = useCallback((lead: Lead) => {
     setSelected((prev) => {
@@ -227,6 +237,13 @@ export default function LeadsScreen() {
                   selected={!!agent}
                   onPress={() => setPickingAgent(true)}
                 />
+                <ResetChip show={filtered} onReset={resetFilters} />
+              </View>
+            )}
+            {!manager && filtered && (
+              <View style={styles.chips}>
+
+                <ResetChip show={filtered} onReset={resetFilters} />
               </View>
             )}
             {total !== undefined && (
