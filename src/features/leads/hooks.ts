@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { Activity } from "@/features/activities/types";
 import { apiClient, getErrorMessage, type Paginated } from "@/lib/api-client";
@@ -8,6 +8,7 @@ import type { ImportLeadRow, ImportResult } from "./import";
 import type {
   CityUploadParams,
   Lead,
+  LeadCardInfo,
   LeadCity,
   LeadListParams,
   LeadPayload,
@@ -22,6 +23,7 @@ export const leadKeys = {
   list: (params: LeadListParams) => [...leadKeys.all, "list", params] as const,
   detail: (id: string) => [...leadKeys.all, "detail", id] as const,
   activities: (id: string) => [...leadKeys.all, "activities", id] as const,
+  cardInfo: (ids: string[]) => [...leadKeys.all, "card-info", ids] as const,
 };
 
 const PAGE_SIZE = 25;
@@ -36,6 +38,7 @@ export const leadsApi = {
   setRating: (id: string, rating: LeadRating | null) => apiClient.put<Lead>(`/leads/${id}/rating`, { rating }),
   activities: (id: string) => apiClient.get<Activity[]>(`/leads/${id}/activities`),
   addNote: (id: string, message: string) => apiClient.post<Activity>(`/leads/${id}/notes`, { message }),
+  cardInfo: (leadIds: string[]) => apiClient.post<LeadCardInfo[]>("/leads/card-info", { leadIds }),
   logMessage: (id: string, payload: { channel: "whatsapp" | "email"; body: string; subject?: string; templateName?: string }) =>
     apiClient.post<Activity>(`/leads/${id}/messages`, payload),
   recordView: (id: string) => apiClient.post<null>(`/leads/${id}/views`),
@@ -47,6 +50,25 @@ export function useLeads(params: LeadListParams) {
     queryFn: ({ pageParam }) => leadsApi.list({ limit: PAGE_SIZE, ...params, page: pageParam }),
     initialPageParam: 1,
     getNextPageParam: (last: Paginated<Lead>) => nextPage(last),
+  });
+}
+
+/** The API takes at most 100 leads per call; the pipeline list can load more. */
+const CARD_INFO_CHUNK = 100;
+
+/** Latest note and next follow-up per lead, keyed by lead id (pipeline). */
+export function useLeadCardInfo(leadIds: string[]) {
+  const ids = [...leadIds].sort();
+  return useQuery({
+    queryKey: leadKeys.cardInfo(ids),
+    queryFn: async () => {
+      const chunks: string[][] = [];
+      for (let i = 0; i < ids.length; i += CARD_INFO_CHUNK) chunks.push(ids.slice(i, i + CARD_INFO_CHUNK));
+      const rows = (await Promise.all(chunks.map((chunk) => leadsApi.cardInfo(chunk)))).flat();
+      return new Map(rows.map((row) => [row.leadId, row]));
+    },
+    placeholderData: keepPreviousData,
+    enabled: ids.length > 0,
   });
 }
 
@@ -98,7 +120,10 @@ export function useAddNote(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (message: string) => leadsApi.addNote(id, message),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: leadKeys.activities(id) }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: leadKeys.activities(id) });
+      void queryClient.invalidateQueries({ queryKey: [...leadKeys.all, "card-info"] });
+    },
   });
 }
 
