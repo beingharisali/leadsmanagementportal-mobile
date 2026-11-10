@@ -26,6 +26,7 @@ import { flattenPages } from "@/lib/infinite";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { radius, spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
+import { usePersistedState } from "@/lib/persisted-state";
 
 const TABS: { value: PaymentStatus; label: string }[] = [
   { value: "pending", label: "To review" },
@@ -39,8 +40,15 @@ const invoiceOf = (payment: PlatformPayment) => (typeof payment.invoice === "str
 export default function PaymentsScreen() {
   // Opened from the search screen: that payment, on its own status's tab.
   const link = useLocalSearchParams<{ search?: string; status?: string }>();
-  const [search, setSearch] = useState(link.search ?? "");
-  const [status, setStatus] = useState<PaymentStatus>(TABS.find((t) => t.value === link.status)?.value ?? "pending");
+  // A link replaces the remembered tab and search with its own.
+  const fromLink = !!link.search || !!link.status;
+  const [search, setSearch] = usePersistedState("console.payments.search", link.search ?? "", { override: fromLink });
+  const [status, setStatus] = usePersistedState<PaymentStatus>(
+    "console.payments.status",
+    TABS.find((t) => t.value === link.status)?.value ?? "pending",
+    { override: fromLink, revive: (raw) => TABS.find((t) => t.value === raw)?.value },
+  );
+
   const payments = usePlatformPayments(status, search || undefined);
   const approve = useApprovePayment();
   const [rejecting, setRejecting] = useState<PlatformPayment | null>(null);

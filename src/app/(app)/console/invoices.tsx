@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/ui/app-text";
@@ -16,6 +16,8 @@ import { flattenPages } from "@/lib/infinite";
 import { formatDate } from "@/lib/format";
 import { radius, spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
+import { ResetChip } from "@/components/ui/reset-chip";
+import { usePersistedState } from "@/lib/persisted-state";
 
 const FILTERS = {
   open: { label: "Unpaid", params: { status: "open" } },
@@ -36,8 +38,13 @@ function StatusBadge({ invoice }: { invoice: PlatformInvoice }) {
 export default function InvoicesScreen() {
   // Opened from the search screen: that invoice, whatever its status.
   const link = useLocalSearchParams<{ search?: string }>();
-  const [search, setSearch] = useState(link.search ?? "");
-  const [filter, setFilter] = useState<Filter>(link.search ? "all" : "open");
+  // A link replaces the remembered filter with its own.
+  const fromLink = !!link.search;
+  const [search, setSearch] = usePersistedState("console.invoices.search", link.search ?? "", { override: fromLink });
+  const [filter, setFilter] = usePersistedState<Filter>("console.invoices.filter", fromLink ? "all" : "open", {
+    override: fromLink,
+    revive: (raw) => (typeof raw === "string" && raw in FILTERS ? (raw as Filter) : undefined),
+  });
   const invoices = usePlatformInvoices({ ...FILTERS[filter].params, search: search || undefined });
   const voidInvoice = useVoidInvoice();
 
@@ -94,7 +101,15 @@ export default function InvoicesScreen() {
             {(Object.keys(FILTERS) as Filter[]).map((key) => (
               <Chip key={key} label={FILTERS[key].label} selected={filter === key} onPress={() => setFilter(key)} />
             ))}
+            <ResetChip
+              show={filter !== "open" || !!search}
+              onReset={() => {
+                setFilter("open");
+                setSearch("");
+              }}
+            />
           </View>
+
           {search ? <Chip icon="close" label={`Invoice ${search}`} selected onPress={() => setSearch("")} /> : null}
         </>
       }

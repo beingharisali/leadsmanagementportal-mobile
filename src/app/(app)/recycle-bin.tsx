@@ -26,11 +26,13 @@ import { formatDateTime } from "@/lib/format";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { radius, spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
+import { usePersistedState } from "@/lib/persisted-state";
 
 /** Managers: deleted leads, which can be restored or deleted for good. */
 export default function RecycleBinScreen() {
   const canEdit = useCanEdit();
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = usePersistedState("recycleBin.search", "");
+
   const debouncedSearch = useDebouncedValue(search.trim());
   const trash = useTrash(debouncedSearch);
   const restore = useRestoreLead();

@@ -38,6 +38,8 @@ import { formatCurrency } from "@/lib/format";
 import { accentColor, withAlpha } from "@/theme/accents";
 import { radius, spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
+import { ResetChip } from "@/components/ui/reset-chip";
+import { usePersistedState } from "@/lib/persisted-state";
 
 /**
  * The pipeline on a phone: one stage at a time instead of the website's
@@ -49,14 +51,15 @@ export default function PipelineScreen() {
   const { colors, scheme } = useTheme();
   const { stages } = useLeadOptions();
   const stats = useLeadStats();
-  const [selected, setSelected] = useState<string | null>(null);
-  const stage = selected ?? stages[0]?.key ?? "new";
+  const [selected, setSelected] = usePersistedState<string | null>("pipeline.stage", null);
+  // A remembered stage that was removed from the pipeline falls back to the first one.
+  const stage = (selected && stages.some((s) => s.key === selected) ? selected : null) ?? stages[0]?.key ?? "new";
   // Managers: "all", "unassigned" or a user id
-  const [agentScope, setAgentScope] = useState("all");
-  const [assigned, setAssigned] = useState<AssignedFilter>(NO_ASSIGNED);
+  const [agentScope, setAgentScope] = usePersistedState("pipeline.agent", "all");
+  const [assigned, setAssigned] = usePersistedState<AssignedFilter>("pipeline.assigned", NO_ASSIGNED);
   const [pickingAgent, setPickingAgent] = useState(false);
   const [pickingDate, setPickingDate] = useState(false);
-  const [cityUpload, setCityUpload] = useState<CityUploadFilter>(NO_CITY_UPLOAD);
+  const [cityUpload, setCityUpload] = usePersistedState<CityUploadFilter>("pipeline.cityUpload", NO_CITY_UPLOAD);
   const [pickingCityUpload, setPickingCityUpload] = useState(false);
   const cityUploadCount = countCityUpload(cityUpload);
   const users = useAssignableUsers(manager);
@@ -170,7 +173,16 @@ export default function PipelineScreen() {
                 selected={cityUploadCount > 0}
                 onPress={() => setPickingCityUpload(true)}
               />
+              <ResetChip
+                show={filtered}
+                onReset={() => {
+                  setAgentScope("all");
+                  setAssigned(NO_ASSIGNED);
+                  setCityUpload(NO_CITY_UPLOAD);
+                }}
+              />
             </View>
+
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.stages}>
               {stages.map((s) => {
                 const active = s.key === stage;

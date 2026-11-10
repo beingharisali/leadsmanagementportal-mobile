@@ -1,5 +1,5 @@
 import { router, useNavigation } from "expo-router";
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/ui/app-text";
@@ -16,14 +16,16 @@ import { useTaskAccess } from "@/features/tasks/hooks";
 import { getErrorMessage } from "@/lib/api-client";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { spacing } from "@/theme/colors";
+import { usePersistedState } from "@/lib/persisted-state";
 
 /** The projects you're on, manage or created (every one, for the owner). */
 export default function ProjectsScreen() {
   const navigation = useNavigation();
   const canEdit = useCanEdit();
   const access = useTaskAccess();
-  const [bin, setBin] = useState(false);
-  const [search, setSearch] = useState("");
+  const [bin, setBin] = usePersistedState("projects.bin", false);
+  const [search, setSearch] = usePersistedState("projects.search", "");
+
   const debounced = useDebouncedValue(search.trim(), 300);
   const projects = useProjects({ limit: 100, search: debounced || undefined, deleted: bin || undefined });
   const restore = useRestoreProject();
@@ -41,7 +43,7 @@ export default function ProjectsScreen() {
         </View>
       ),
     });
-  }, [navigation, bin, canEdit, access.data?.canAssign]);
+  }, [navigation, bin, setBin, canEdit, access.data?.canAssign]);
 
   function confirmPurge(id: string) {
     Alert.alert("Delete this project for good?", "Its tasks, comments and files are deleted too. This can't be undone.", [

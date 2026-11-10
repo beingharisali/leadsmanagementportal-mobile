@@ -16,6 +16,8 @@ import { useAssignableUsers } from "@/features/users/hooks";
 import { flattenPages } from "@/lib/infinite";
 import { spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
+import { ResetChip } from "@/components/ui/reset-chip";
+import { usePersistedState } from "@/lib/persisted-state";
 
 const ENTITY_FILTERS: { value: ActivityListParams["entityType"]; label: string }[] = [
   { value: undefined, label: "Everything" },
@@ -27,10 +29,11 @@ const ALL_ACTIONS = "all";
 /** Owners and admins: every change to a lead or a team member, and every sign-in. Updates live. */
 export default function ActivityFeedScreen() {
   const { colors } = useTheme();
-  const [entityType, setEntityType] = useState<ActivityListParams["entityType"]>();
-  const [action, setAction] = useState<ActivityAction>();
-  const [actor, setActor] = useState<string | null>(null);
-  const [showPresence, setShowPresence] = useState(true);
+  const [entityType, setEntityType] = usePersistedState<ActivityListParams["entityType"]>("activity.entityType", undefined);
+  const [action, setAction] = usePersistedState<ActivityAction | undefined>("activity.action", undefined);
+  const [actor, setActor] = usePersistedState<string | null>("activity.actor", null);
+  const [showPresence, setShowPresence] = usePersistedState("activity.showPresence", true);
+  const isFiltered = !!entityType || !!action || !!actor || !showPresence;
   const [pickingAction, setPickingAction] = useState(false);
   const [pickingActor, setPickingActor] = useState(false);
   const users = useAssignableUsers();
@@ -78,7 +81,17 @@ export default function ActivityFeedScreen() {
                 selected={!!actor}
                 onPress={() => setPickingActor(true)}
               />
+              <ResetChip
+                show={isFiltered}
+                onReset={() => {
+                  setEntityType(undefined);
+                  setAction(undefined);
+                  setActor(null);
+                  setShowPresence(true);
+                }}
+              />
             </View>
+
             <View style={styles.switchRow}>
               <AppText variant="small" style={styles.flex}>
                 Show sign-ins & lead opens

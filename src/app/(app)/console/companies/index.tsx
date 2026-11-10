@@ -1,5 +1,5 @@
 import { router, Stack } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/ui/app-text";
@@ -22,6 +22,8 @@ import { flattenPages } from "@/lib/infinite";
 import { formatDateTime } from "@/lib/format";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { spacing } from "@/theme/colors";
+import { ResetChip } from "@/components/ui/reset-chip";
+import { usePersistedState } from "@/lib/persisted-state";
 
 const STATUS_FILTERS: { value: OrganizationStatus | undefined; label: string }[] = [
   { value: undefined, label: "All statuses" },
@@ -31,10 +33,10 @@ const STATUS_FILTERS: { value: OrganizationStatus | undefined; label: string }[]
 
 /** Heapware staff: every company using GetCloseWise. Tap one to manage it. */
 export default function CompaniesScreen() {
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<OrganizationStatus>();
-  const [plan, setPlan] = useState<PlanKey>();
-  const [billing, setBilling] = useState<BillingStatus>();
+  const [search, setSearch] = usePersistedState("console.companies.search", "");
+  const [status, setStatus] = usePersistedState<OrganizationStatus | undefined>("console.companies.status", undefined);
+  const [plan, setPlan] = usePersistedState<PlanKey | undefined>("console.companies.plan", undefined);
+  const [billing, setBilling] = usePersistedState<BillingStatus | undefined>("console.companies.billing", undefined);
   const debouncedSearch = useDebouncedValue(search.trim());
   const companies = usePlatformOrganizations({ search: debouncedSearch || undefined, status, plan, billingStatus: billing });
   const filtered = !!debouncedSearch || !!status || !!plan || !!billing;
@@ -101,6 +103,20 @@ export default function CompaniesScreen() {
                 <Chip key={b} label={billingStatusLabels[b]} selected={billing === b} onPress={() => setBilling(b)} />
               ))}
             </View>
+            {(!!search || !!status || !!plan || !!billing) && (
+              <View style={styles.chips}>
+                <ResetChip
+                  show
+                  onReset={() => {
+                    setSearch("");
+                    setStatus(undefined);
+                    setPlan(undefined);
+                    setBilling(undefined);
+                  }}
+                />
+              </View>
+            )}
+
           </>
         }
         empty={
