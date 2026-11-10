@@ -26,7 +26,7 @@ import {
 } from "@/features/leads/components/city-upload-filter";
 import { LeadRow } from "@/features/leads/components/lead-row";
 import { MoveStageSheet } from "@/features/leads/components/move-stage-sheet";
-import { useDeleteLeadsByStatus, useLeads, useLeadStats } from "@/features/leads/hooks";
+import { useDeleteLeadsByStatus, useLeadCardInfo, useLeads, useLeadStats } from "@/features/leads/hooks";
 import type { Lead } from "@/features/leads/types";
 import { useCanEdit } from "@/features/organizations/hooks";
 import { UNASSIGNED, UserPickerSheet } from "@/features/users/components/user-picker-sheet";
@@ -40,6 +40,7 @@ import { radius, spacing } from "@/theme/colors";
 import { useTheme } from "@/theme/use-theme";
 import { ResetChip } from "@/components/ui/reset-chip";
 import { usePersistedState } from "@/lib/persisted-state";
+import { useNow } from "@/lib/use-now";
 
 /**
  * The pipeline on a phone: one stage at a time instead of the website's
@@ -124,21 +125,33 @@ export default function PipelineScreen() {
     );
   }
 
+  const items = useMemo(() => flattenPages(leads.data), [leads.data]);
+  const cardInfo = useLeadCardInfo(items.map((lead) => lead.id));
+  const now = useNow();
+
   const renderItem = useCallback(
-    ({ item }: { item: Lead }) => <LeadRow lead={item} showAssignee={manager} showAssignedAt />,
-    [manager],
+    ({ item }: { item: Lead }) => (
+      <LeadRow
+        lead={item}
+        showAssignee={manager}
+        showAssignedAt
+        now={now}
+        cardInfo={cardInfo.data?.get(item.id)}
+      />
+    ),
+    [manager, now, cardInfo.data],
   );
 
   return (
     <>
       <InfiniteList
-        items={flattenPages(leads.data)}
+        items={items}
         renderItem={renderItem}
         keyExtractor={(lead) => lead.id}
         isPending={leads.isPending}
         error={leads.error}
         onRetry={() => void leads.refetch()}
-        onRefresh={() => Promise.all([leads.refetch(), stats.refetch()])}
+        onRefresh={() => Promise.all([leads.refetch(), stats.refetch(), cardInfo.refetch()])}
         hasNextPage={leads.hasNextPage}
         isFetchingNextPage={leads.isFetchingNextPage}
         fetchNextPage={() => void leads.fetchNextPage()}

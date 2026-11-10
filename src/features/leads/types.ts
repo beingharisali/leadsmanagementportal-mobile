@@ -16,6 +16,17 @@ export const LEAD_RATINGS = ["hot", "warm", "cold"] as const;
 export type LeadRating = (typeof LEAD_RATINGS)[number];
 
 /** Stages and sources are per organization, so leads carry their keys (labels: `useLeadOptions()`). */
+/** Extras the pipeline shows on each lead (`POST /leads/card-info`). */
+export interface LeadCardInfo {
+  leadId: string;
+  /** Notes typed in "Add note" */
+  noteCount: number;
+  latestNote: { message: string; createdAt: string; author: string | null } | null;
+  pendingFollowUps: number;
+  /** The soonest pending follow-up */
+  nextFollowUp: { type: "call" | "meeting" | "message"; dueAt: string } | null;
+}
+
 export interface Lead {
   id: string;
   name: string;
